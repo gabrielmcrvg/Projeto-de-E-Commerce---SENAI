@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 from sqlalchemy import select
-from excecoes import RecursoNaoEncontrado
+from exceptions.excecoes import RecursoNaoEncontrado
 
 
 def obter_ou_404(session, model, id, nome: str, options: list = None):

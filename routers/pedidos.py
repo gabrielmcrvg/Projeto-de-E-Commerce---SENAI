@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import selectinload
 from database import SessionDep, SessionLocal
 from dependencias import Paginacao
-from excecoes import RecursoNaoEncontrado
+from exceptions.excecoes import RecursoNaoEncontrado
 from models.pedido import Pedido, ItemPedido
 from models.produto import Produto
 from models.cliente import Cliente

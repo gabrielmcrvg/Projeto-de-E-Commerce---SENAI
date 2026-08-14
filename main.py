@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from database import Base, engine
 from routers import categorias, clientes, produtos, pedidos
-from excecoes import RecursoNaoEncontrado
+from exceptions.excecoes import RecursoNaoEncontrado
 import models
 
 Base.metadata.create_all(bind=engine)
