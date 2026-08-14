@@ -4,10 +4,10 @@ from excecoes import RecursoNaoEncontrado
 
 
 def obter_ou_404(session, model, id, nome: str, options: list = None):
-    com_options = select(model).where(model.id == id)
+    stmt = select(model).where(model.id == id)
     if options:
-        com_options = com_options.options(*options)
-    obj = session.exec(com_options).first()
+        stmt = stmt.options(*options)
+    obj = session.execute(stmt).scalars().first()
     if obj is None:
         raise RecursoNaoEncontrado(nome)
     return obj
