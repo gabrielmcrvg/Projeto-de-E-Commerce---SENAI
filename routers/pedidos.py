@@ -1,67 +1,55 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import selectinload
-from database import SessionLocal
+from database import SessionDep, SessionLocal
+from dependencias import Paginacao
 from excecoes import RecursoNaoEncontrado
 from models.pedido import Pedido, ItemPedido
 from models.produto import Produto
 from models.cliente import Cliente
 from schemas.pedido import PedidoEntrada, PedidoPatch, PedidoResposta
+from utils.utils import obter_ou_404
 
 router = APIRouter(prefix='/pedidos', tags=['Pedidos'])
 
 def validar_cliente(cliente_id: int, session):
-    cliente = session.get(Cliente, cliente_id)
-    if cliente is None:
-        raise RecursoNaoEncontrado("Cliente")
+    obter_ou_404(session, Cliente, cliente_id, "Cliente")
 
 # =-= GET =-=
 
 @router.get('/listar_pedidos', response_model=list[PedidoResposta])
-def listar_pedidos():
-    with SessionLocal() as session:
-        return session.query(Pedido).options(selectinload(Pedido.cliente), selectinload(Pedido.itens_pedido)).all()
+def listar_pedidos(session: SessionDep, pag: Paginacao = Depends()):
+        return session.query(Pedido).options(selectinload(Pedido.cliente), selectinload(Pedido.itens_pedido)).offset(pag.skip).limit(pag.limit).all()
 
 @router.get('/{pedido_id}', response_model=PedidoResposta)
-def buscar_pedido(pedido_id: int):
-    with SessionLocal() as session:
-        pedido = session.query(Pedido).options(selectinload(Pedido.cliente), selectinload(Pedido.itens_pedido)).filter(Pedido.id == pedido_id).first()
-        if pedido is None:
-            raise RecursoNaoEncontrado("Pedido")
+def buscar_pedido(session: SessionDep, pedido_id: int):
+        pedido = obter_ou_404(session, Pedido, pedido_id, "Pedido", options=[selectinload(Pedido.cliente), selectinload(Pedido.itens_pedido)])
         return pedido
 
 # =-= POST =-=
 
 @router.post('/criar_pedido', status_code=201, response_model=PedidoResposta)
-def criar_pedido(dados: PedidoEntrada):
-    with SessionLocal() as session:
+def criar_pedido(session: SessionDep, dados: PedidoEntrada):
         validar_cliente(dados.cliente_id, session)
         itens_recebidos = dados.itens
         novo_pedido = Pedido(cliente_id=dados.cliente_id)
         for item in itens_recebidos:
-            produto = session.get(Produto, item.produto_id)
-            if produto is None:
-                raise RecursoNaoEncontrado("Produto")
+            produto = obter_ou_404(session, Produto, item.produto_id, "Produto")
             novo_pedido.validar_novo_item(produto, item.quantidade)
             novo_pedido.itens_pedido.append(ItemPedido(produto_id=produto.id, quantidade=item.quantidade, preco_unitario=produto.preco))
         session.add(novo_pedido)
         session.commit()
-        pedido_criado = session.query(Pedido).options(selectinload(Pedido.cliente), selectinload(Pedido.itens_pedido)).filter(Pedido.id == novo_pedido.id).first()
+        pedido_criado = obter_ou_404(session, Pedido, novo_pedido.id, "Pedido", options=[selectinload(Pedido.cliente), selectinload(Pedido.itens_pedido)])
         return pedido_criado
 
 # =-= PUT =-=
 
 @router.put('/{pedido_id}', response_model=PedidoResposta)
-def atualizar_pedido(pedido_id: int, dados: PedidoEntrada):
-    with SessionLocal() as session:
-        pedido = session.query(Pedido).options(selectinload(Pedido.cliente), selectinload(Pedido.itens_pedido)).filter(Pedido.id == pedido_id).first()
-        if pedido is None:
-            raise RecursoNaoEncontrado("Pedido")
+def atualizar_pedido(session: SessionDep, pedido_id: int, dados: PedidoEntrada):
+        pedido = obter_ou_404(session, Pedido, pedido_id, "Pedido", options=[selectinload(Pedido.cliente), selectinload(Pedido.itens_pedido)])
         validar_cliente(dados.cliente_id, session)
         novos_itens = []
         for item in dados.itens:
-            produto = session.get(Produto, item.produto_id)
-            if produto is None:
-                raise RecursoNaoEncontrado("Produto")
+            produto = obter_ou_404(session, Produto, item.produto_id, "Produto")
             pedido.validar_novo_item(produto, item.quantidade)
             novos_itens.append(ItemPedido(produto_id=produto.id, quantidade=item.quantidade, preco_unitario=produto.preco))
         pedido.cliente_id = dados.cliente_id
@@ -74,11 +62,8 @@ def atualizar_pedido(pedido_id: int, dados: PedidoEntrada):
 # =-= PATCH =-=
 
 @router.patch('/{pedido_id}', response_model=PedidoResposta)
-def alterar_pedido(pedido_id: int, dados: PedidoPatch):
-    with SessionLocal() as session:
-        pedido = session.query(Pedido).options(selectinload(Pedido.cliente), selectinload(Pedido.itens_pedido)).filter(Pedido.id == pedido_id).first()
-        if pedido is None:
-            raise RecursoNaoEncontrado("Pedido")
+def alterar_pedido(session: SessionDep, pedido_id: int, dados: PedidoPatch):
+        pedido = obter_ou_404(session, Pedido, pedido_id, "Pedido", options=[selectinload(Pedido.cliente), selectinload(Pedido.itens_pedido)])
         mudancas = dados.model_dump(exclude_unset=True)
         if 'cliente_id' in mudancas:
             validar_cliente(mudancas['cliente_id'], session)
@@ -94,11 +79,8 @@ def alterar_pedido(pedido_id: int, dados: PedidoPatch):
 # =-= DELETE =-=
 
 @router.delete('/{pedido_id}')
-def remover_pedido(pedido_id: int):
-    with SessionLocal() as session:
-        pedido = session.get(Pedido, pedido_id)
-        if pedido is None:
-            raise RecursoNaoEncontrado("Pedido")
+def remover_pedido(session: SessionDep, pedido_id: int):
+        pedido = obter_ou_404(session, Pedido, pedido_id, "Pedido")
         session.delete(pedido)
         session.commit()
         return {'mensagem': 'Pedido removido'}

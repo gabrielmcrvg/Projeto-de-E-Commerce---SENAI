@@ -14,7 +14,7 @@ class Pedido(Base):
     status: Mapped[str] = mapped_column(default="Pendente")
     cliente_id: Mapped[int] = mapped_column(ForeignKey("clientes.id"))
     cliente: Mapped["Cliente"] = relationship(back_populates="pedidos")
-    itens_pedido: Mapped[list["ItemPedido"]] = relationship(back_populates="pedido")
+    itens_pedido: Mapped[list["ItemPedido"]] = relationship(back_populates="pedido", cascade="all, delete-orphan")
 
     def validar_novo_item(self, produto: Produto, quantidade: int):
         if not isinstance(quantidade, int) or isinstance(quantidade, bool) or quantidade <= 0:

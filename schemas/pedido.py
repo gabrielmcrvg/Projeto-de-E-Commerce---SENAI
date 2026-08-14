@@ -8,7 +8,6 @@ class ItemPedidoEntrada(BaseModel):
 class PedidoEntrada(BaseModel):
     cliente_id: int
     itens: list[ItemPedidoEntrada]
-    data_pedido: datetime = Field(default_factory=datetime.now)
     status: str = Field(default='pendente')
 
 class ItemPedidoResposta(BaseModel):
