@@ -1,4 +1,5 @@
 from decimal import Decimal
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from models.usuario import Usuario
 from exceptions.erros import (
@@ -11,7 +12,7 @@ from exceptions.erros import (
 class Cliente(Usuario):
     __tablename__ = "clientes"
 
-    id: Mapped[int] = mapped_column(primary_key=True, init=False)
+    id: Mapped[int] = mapped_column(ForeignKey("usuarios.id"), primary_key=True, init=False)
     cpf: Mapped[str] = mapped_column(unique=True)
     telefone_celular: Mapped[str] = mapped_column(default="")
     endereco: Mapped[str] = mapped_column(default="")

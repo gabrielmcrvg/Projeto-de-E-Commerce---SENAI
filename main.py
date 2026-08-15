@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from database import Base, engine
-from routers import categorias, clientes, produtos, pedidos
+from routers import auth, categorias, clientes, produtos, pedidos
 from exceptions.excecoes import RecursoNaoEncontrado
 import models
 
@@ -13,6 +13,7 @@ app.include_router(produtos.router)
 app.include_router(pedidos.router)
 app.include_router(clientes.router)
 app.include_router(categorias.router)
+app.include_router(auth.router)
 
 @app.exception_handler(RecursoNaoEncontrado)
 def recurso_nao_encontrado_handler(request: Request, exc: RecursoNaoEncontrado):

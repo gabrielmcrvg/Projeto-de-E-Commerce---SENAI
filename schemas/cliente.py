@@ -2,6 +2,8 @@ from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
+from schemas.pedido import PedidoResposta
+
 
 class ClienteEntrada(BaseModel):
     login: str = Field(min_length=3)
@@ -22,6 +24,17 @@ class ClienteResposta(BaseModel):
     telefone_celular: str
     cpf: str
     endereco: str
+
+class ClienteComPedido(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    login: str
+    nome: str
+    email: str
+    telefone_celular: str
+    cpf: str
+    endereco: str
+    pedidos: list[PedidoResposta] = []
 
 class ClientePatch(BaseModel):
     nome: str | None = Field(default=None, min_length=2)

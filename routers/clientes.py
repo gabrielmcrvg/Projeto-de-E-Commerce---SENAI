@@ -3,7 +3,7 @@ from sqlalchemy.orm import selectinload
 from database import SessionDep, SessionLocal
 from models.cliente import Cliente
 from models.pedido import Pedido
-from schemas.cliente import ClienteEntrada, ClientePatch, ClienteResposta, PagamentoEntrada
+from schemas.cliente import ClienteComPedido, ClienteEntrada, ClientePatch, ClienteResposta, PagamentoEntrada
 from schemas.pedido import PedidoResposta
 from utils.utils import obter_ou_404
 
@@ -15,7 +15,7 @@ router = APIRouter(prefix='/clientes', tags=['Clientes'])
 def listar_clientes(session: SessionDep):
         return session.query(Cliente).options(selectinload(Cliente.pedidos)).all()
 
-@router.get('/{cliente_id}', response_model=ClienteResposta)
+@router.get('/{cliente_id}', response_model=ClienteComPedido)
 def buscar_cliente(session: SessionDep, cliente_id: int):
         cliente = obter_ou_404(session, Cliente, cliente_id, "Cliente", options=[selectinload(Cliente.pedidos)])
         return cliente
