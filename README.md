@@ -1,4 +1,3 @@
-
 # Projeto de E-Commerce — SENAI (em desenvolvimento)
 
 API REST para um sistema de e-commerce, desenvolvida em Python com **FastAPI** como projeto final de conclusão do curso técnico de desenvolvimento de sistemas no SENAI.
@@ -23,26 +22,27 @@ A aplicação expõe endpoints para gerenciar produtos, categorias, clientes e p
 ## 📁 Estrutura do projeto
 
 ```
-├── exceptions/         # Exceções customizadas (ex: RecursoNaoEncontrado)
-├── models/             # Modelos SQLAlchemy: Usuario, Administrador, Separador, Cliente, Categoria, Produto, Pedido, ItemPedido
-├── routers/            # Rotas da API
-│   ├── auth.py             # /usuarios — registro, login/token, listagem
-│   ├── categorias.py       # /categorias — CRUD de categorias
-│   ├── produtos.py         # /produtos  — CRUD de produtos
-│   ├── clientes.py         # /clientes  — CRUD de clientes + pagamento de pedidos
-│   └── pedidos.py          # /pedidos   — CRUD de pedidos
-├── schemas/             # Schemas Pydantic (validação de entrada/saída)
-├── services/            # Regras de negócio da aplicação
-├── consultar.py         # Script auxiliar para consultas no banco
-├── criar_tabelas.py     # Script para criação das tabelas do banco
-├── database.py          # Configuração da conexão com o banco de dados (SessionDep, engine, Base)
-├── dependencias.py      # Dependências reutilizáveis (ex: paginação)
-├── excecoes.py           # Tratamento de exceções
-├── inserir.py             # Script auxiliar para inserção de dados
-├── main.py                 # Ponto de entrada da aplicação FastAPI
-├── seguranca.py             # Hash de senha, verificação de senha e geração de token JWT
-├── utils/                    # Funções utilitárias (ex: obter_ou_404)
-└── requirements.txt           # Dependências do projeto
+├── exceptions/          # Exceções customizadas
+│   ├── erros.py             # Hierarquia de exceções de domínio (LojaError e subclasses)
+│   └── excecoes.py          # RecursoNaoEncontrado, usada pelo obter_ou_404
+├── models/              # Modelos SQLAlchemy: Usuario, Administrador, Separador, Cliente, Categoria, Produto, Pedido, ItemPedido
+├── routers/              # Rotas da API
+│   ├── auth.py               # /usuarios — registro, login/token, listagem
+│   ├── categorias.py         # /categorias — CRUD de categorias
+│   ├── produtos.py           # /produtos  — CRUD de produtos
+│   ├── clientes.py           # /clientes  — CRUD de clientes
+│   └── pedidos.py            # /pedidos   — CRUD de pedidos
+├── schemas/              # Schemas Pydantic (validação de entrada/saída)
+├── services/              # Regras de negócio da aplicação
+├── consultar.py            # Script auxiliar para consultas no banco
+├── criar_tabelas.py        # Script para criação das tabelas do banco
+├── database.py              # Configuração da conexão com o banco de dados (SessionDep, engine, Base)
+├── dependencias.py           # Dependências reutilizáveis (ex: paginação)
+├── inserir.py                  # Script auxiliar para inserção de dados de teste
+├── main.py                      # Ponto de entrada da aplicação FastAPI
+├── seguranca.py                  # Hash de senha, verificação de senha e geração de token JWT
+├── utils/                         # Funções utilitárias (ex: obter_ou_404, validar_produto, validar_categoria)
+└── requirements.txt                # Dependências do projeto
 ```
 
 ## 🚀 Como executar o projeto
@@ -73,12 +73,27 @@ A aplicação expõe endpoints para gerenciar produtos, categorias, clientes e p
    pip install -r requirements.txt
    ```
 
-4. Execute a aplicação:
+4. Crie um arquivo `.env` na raiz do projeto com a chave usada para assinar os tokens JWT:
+   ```
+   SECRET_KEY=uma_chave_secreta_qualquer
+   ```
+
+5. Crie as tabelas do banco (ou deixe a aplicação criar automaticamente ao subir):
+   ```bash
+   py criar_tabelas.py
+   ```
+
+6. (Opcional) Popule o banco com dados de teste:
+   ```bash
+   py inserir.py
+   ```
+
+7. Execute a aplicação:
    ```bash
    uvicorn main:app --reload
    ```
 
-5. Acesse a documentação interativa da API (gerada automaticamente pelo FastAPI):
+8. Acesse a documentação interativa da API (gerada automaticamente pelo FastAPI):
    - Swagger UI: [http://localhost:8000/docs](http://localhost:8000/docs)
    - ReDoc: [http://localhost:8000/redoc](http://localhost:8000/redoc)
 
@@ -102,7 +117,7 @@ A API é organizada em routers, cada um responsável por um recurso. Todos retor
 
 | Método | Rota                          | Descrição                                                                 |
 |--------|--------------------------------|------------------------------------------------------------------------------|
-| GET    | `/categorias/listar_categorias`| Lista categorias (com seus produtos vinculados)                              |
+| GET    | `/categorias/listar_categorias`| Lista categorias (com seus produtos vinculados), com paginação               |
 | GET    | `/categorias/{categoria_id}`  | Busca uma categoria específica                                              |
 | POST   | `/categorias/criar_categoria` | Cria uma nova categoria                                                     |
 | PUT    | `/categorias/{categoria_id}`  | Atualiza o nome da categoria (substituição completa)                       |
@@ -114,6 +129,7 @@ A API é organizada em routers, cada um responsável por um recurso. Todos retor
 | Método | Rota                        | Descrição                                             |
 |--------|------------------------------|----------------------------------------------------------|
 | GET    | `/produtos/listar_produtos` | Lista produtos (com dados da categoria), com paginação   |
+| GET    | `/produtos/estoque`         | Lista produtos com foco em `id`, `nome` e `estoque`       |
 | GET    | `/produtos/{produto_id}`    | Busca um produto específico                              |
 | POST   | `/produtos/criar_produto`   | Cria um novo produto (valida se `categoria_id` existe)    |
 | PUT    | `/produtos/{produto_id}`    | Atualiza um produto (substituição completa)               |
@@ -129,14 +145,16 @@ A API é organizada em routers, cada um responsável por um recurso. Todos retor
 |--------|----------------------------------------------------|------------------------------------------------------------------------|
 | GET    | `/clientes/listar_clientes`                        | Lista clientes (com seus pedidos)                                      |
 | GET    | `/clientes/{cliente_id}`                           | Busca um cliente específico, incluindo seus pedidos                    |
-| POST   | `/clientes/criar_cliente`                          | Cria um novo cliente (`login`, `senha`, `nome`, `email`, `telefone_celular`, `cpf`, `endereco`) |
+| POST   | `/clientes/criar_cliente`                          | Cria um novo cliente                                                    |
 | PUT    | `/clientes/{cliente_id}`                           | Atualiza um cliente (substituição completa)                            |
 | PATCH  | `/clientes/{cliente_id}`                           | Atualiza parcialmente os dados do cliente                              |
 | DELETE | `/clientes/{cliente_id}`                           | Remove um cliente                                                       |
 
-**Corpo de criação/atualização** (`ClienteEntrada`): `login` (mín. 3), `senha` (mín. 6), `nome` (mín. 2), `email`, `telefone_celular`, `cpf` (exatamente 11 caracteres), `endereco`.
-**Resposta** (`ClienteResposta`): `id`, `login`, `nome`, `email`, `telefone_celular`, `cpf`, `endereco`. Ao buscar um cliente específico, a resposta (`ClienteComPedido`) inclui também a lista de `pedidos`.
-**PATCH** (`ClientePatch`): todos os campos são opcionais (`nome`, `email`, `telefone_celular`, `endereco` — login e senha não são alteráveis por aqui).
+**Corpo de criação/atualização** (`ClienteEntrada`): `username` (mín. 3), `password` (mín. 6), `nome` (mín. 2), `email`, `telefone_celular`, `cpf` (exatamente 11 caracteres), `endereco`.
+**Resposta** (`ClienteResposta`): `id`, `username`, `nome`, `email`, `telefone_celular`, `cpf`, `endereco`. Ao buscar um cliente específico, a resposta (`ClienteComPedido`) inclui também a lista de `pedidos`.
+**PATCH** (`ClientePatch`): todos os campos são opcionais (`nome`, `email`, `telefone_celular`, `endereco` — `username` e `password` não são alteráveis por aqui).
+
+> Se `cpf` ou `username` já estiverem cadastrados em outro usuário, a API responde `400` com uma mensagem indicando o conflito, em vez de um erro genérico.
 
 ### 🧾 Pedidos — `/pedidos`
 
@@ -149,7 +167,7 @@ A API é organizada em routers, cada um responsável por um recurso. Todos retor
 | PATCH  | `/pedidos/{pedido_id}`     | Atualiza parcialmente um pedido; se `status` for `"Cancelado"`, aciona a lógica de cancelamento   |
 | DELETE | `/pedidos/{pedido_id}`     | Remove um pedido                                                                                  |
 
-**Corpo de criação/atualização** (`PedidoEntrada`): `cliente_id`, `itens` (lista de `{ produto_id, quantidade }`, com `quantidade > 0`).
+**Corpo de criação/atualização** (`PedidoEntrada`): `cliente_id`, `itens` (lista de `{ produto_id, quantidade }`, com `quantidade > 0`). Itens repetidos com o mesmo `produto_id` são somados antes da validação de estoque.
 **Resposta** (`PedidoResposta`): `id`, `cliente_id`, `itens` (lista de `{ id, produto_id, quantidade }`), `data_pedido`, `status`.
 **PATCH** (`PedidoPatch`): apenas `status` é alterável (ex.: `"Cancelado"`, o que aciona a validação de cancelamento do pedido).
 
@@ -194,11 +212,13 @@ A partir dela derivam três tipos de usuário, cada um em sua própria tabela:
 
 ## ⚠️ Tratamento de erros
 
-Além do handler para `RecursoNaoEncontrado` (retorna `404` quando um recurso não é encontrado), o projeto define exceções de domínio específicas para validar regras de negócio, entre elas:
+Toda a árvore de exceções de domínio herda de `LojaError`, capturada por um handler genérico que responde `400` com a mensagem do erro. Além dela, `RecursoNaoEncontrado` tem handler próprio, retornando `404`. Entre as exceções de domínio:
 
 - `ClienteInvalidoError` / `EnderecoInvalidoError` — dados de cadastro do cliente inválidos
+- `CPFDuplicadoError` / `EmailDuplicadoError` — CPF ou e-mail já cadastrados em outro usuário
 - `PagamentoInvalidoError` — pedido não pertence ao cliente, já foi pago/cancelado, ou valor pago é insuficiente
-- `EstoqueInsuficienteError` / `ProdutoIndisponivelError` — estoque insuficiente para concluir a operação
+- `EstoqueInsuficienteError` — estoque insuficiente para concluir a operação
+- `ProdutoIndisponivelError` — produto descontinuado ou indisponível para venda
 - `ValorInvalidoError` — valores numéricos inválidos (preço, estoque, quantidade)
 - `PedidoInvalidoError` — operação não permitida para o status atual do pedido
 
