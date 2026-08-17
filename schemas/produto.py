@@ -1,5 +1,6 @@
 from pydantic import BaseModel, ConfigDict, Field
 
+from schemas.categoria import CategoriaResposta
 
 class ProdutoEntrada(BaseModel):
     nome: str = Field(min_length=4)
@@ -8,13 +9,12 @@ class ProdutoEntrada(BaseModel):
     descricao: str = Field(max_length=200)
     categoria_id: int
 
-
-class CategoriaResposta(BaseModel):
+class ProdutoEstoque(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
     nome: str
-
+    estoque: int
 
 class ProdutoResposta(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -25,7 +25,6 @@ class ProdutoResposta(BaseModel):
     estoque: int
     descricao: str
     categoria: CategoriaResposta
-
 
 class ProdutoPatch(BaseModel):
     nome: str | None = Field(default=None, min_length=4)

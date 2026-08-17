@@ -2,6 +2,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, MappedAsDataclass, mapped_column
 
 from database import Base
+from seguranca import verificar_senha
 
 class Usuario(MappedAsDataclass, Base, kw_only=True):
     __tablename__ = "usuarios"
@@ -13,7 +14,7 @@ class Usuario(MappedAsDataclass, Base, kw_only=True):
     email: Mapped[str] = mapped_column(default='sem@email.com')
 
     def autenticar(self, sua_senha: str) -> bool:
-        return self.hashed_password == sua_senha
+        return verificar_senha(sua_senha, self.hashed_password)
 
 class Administrador(Usuario):
     __tablename__ = "administrador"

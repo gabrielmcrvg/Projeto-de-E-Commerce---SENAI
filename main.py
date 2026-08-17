@@ -1,7 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from database import Base, engine
-from exceptions.erros import LojaError
 from routers import auth, categorias, clientes, produtos, pedidos
 from exceptions.excecoes import RecursoNaoEncontrado
 from exceptions.erros import LojaError
@@ -25,7 +24,7 @@ def recurso_nao_encontrado_handler(request: Request, exc: RecursoNaoEncontrado):
 def loja_error_handler(request: Request, exc: LojaError):
     return JSONResponse(status_code=400, content={"detail": str(exc)})
 
-@app.get('')
+@app.get('/')
 def raiz():
     return {'Mensagem': 'API do TFU'}
 

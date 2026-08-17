@@ -9,7 +9,6 @@ class ItemPedidoEntrada(BaseModel):
 class PedidoEntrada(BaseModel):
     cliente_id: int
     itens: list[ItemPedidoEntrada]
-    status: str = Field(default='pendente')
 
 class ItemPedidoResposta(BaseModel):
     model_config = ConfigDict(from_attributes=True)

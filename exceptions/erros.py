@@ -34,17 +34,17 @@ class PedidoNaoEncontradoError(LojaError):
     pass
 
 
-class ClienteInvalidoError(LojaError, ValueError):
+class ClienteInvalidoError(ValorInvalidoError):
     pass
 
 
-class CPFDuplicadoError(LojaError, ValueError):
+class CPFDuplicadoError(ValorInvalidoError):
     pass
 
 
-class EmailDuplicadoError(LojaError, ValueError):
+class EmailDuplicadoError(ValorInvalidoError):
     pass
 
 
-class EnderecoInvalidoError(LojaError, ValueError):
+class EnderecoInvalidoError(ValorInvalidoError):
     pass

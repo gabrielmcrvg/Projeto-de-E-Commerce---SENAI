@@ -13,7 +13,7 @@ router = APIRouter(prefix="/usuarios", tags=['Autenticacao'])
 
 # =-= GET =-=
 
-@router.get("/listar_usuarios", response_model=list[UsuarioResposta], status_code=201)
+@router.get("/listar_usuarios", response_model=list[UsuarioResposta])
 def listar_usuarios(session: SessionDep):
     return session.query(Usuario).all()
 

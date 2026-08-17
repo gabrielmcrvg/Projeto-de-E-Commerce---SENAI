@@ -1,6 +1,3 @@
-from typing import Annotated
-
-from fastapi import Depends
 from pwdlib import PasswordHash
 from datetime import datetime, timedelta, timezone
 import jwt
@@ -8,9 +5,6 @@ import jwt
 import os
 from dotenv import load_dotenv
 from fastapi.security import OAuth2PasswordBearer
-
-from database import SessionDep
-from models.usuario import Usuario
 
 load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")

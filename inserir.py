@@ -1,7 +1,9 @@
 from database import SessionLocal
 from models.cliente import Cliente
+from models.pedido import ItemPedido, Pedido
 from models.produto import Categoria, Produto
-from models.usuario import Administrador
+from models.usuario import Administrador, Separador
+from seguranca import gerar_hash
 
 session = SessionLocal()
 
@@ -17,17 +19,40 @@ session.commit()
 session.refresh(novo_produto)
 print(f"Produto criado! ID: {novo_produto.id}")
 
-novo_cliente = Cliente(login="joao_compras", _senha="senha123", nome="João Silva", email="joao@email.com", cpf="12345678901", telefone_celular="11999998888")
+novo_cliente = Cliente(
+    username="joao_compras",
+    hashed_password=gerar_hash("senha123"),
+    nome="João Silva",
+    email="joao@email.com",
+    cpf="12345678901",
+    telefone_celular="11999998888",
+    endereco="Brasil",
+)
 session.add(novo_cliente)
 session.commit()
 session.refresh(novo_cliente)
 print(f"Cliente criado! ID: {novo_cliente.id}")
 
-admin = Administrador(login="admin_chefe", _senha="admin123", nome="Gerente Geral")
+admin = Administrador(username="admin_chefe", hashed_password=gerar_hash("admin123"), nome="Gerente Geral")
 session.add(admin)
 session.commit()
 session.refresh(admin)
 print(f"Admin criado! ID: {admin.id}")
+
+separador = Separador(username="separador_ana", hashed_password=gerar_hash("sep123"), nome="Ana Separadora")
+session.add(separador)
+session.commit()
+session.refresh(separador)
+print(f"Separador criado! ID: {separador.id}")
+
+novo_pedido = Pedido(cliente_id=novo_cliente.id)
+novo_pedido.itens_pedido.append(
+    ItemPedido(produto_id=novo_produto.id, quantidade=1, preco_unitario=novo_produto.preco)
+)
+session.add(novo_pedido)
+session.commit()
+session.refresh(novo_pedido)
+print(f"Pedido criado! ID: {novo_pedido.id}")
 
 session.close()
 print("Dados inseridos com sucesso!")

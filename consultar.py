@@ -26,10 +26,10 @@ for p in pedidos:
 
 admins = session.query(Administrador).all()
 for a in admins:
-    print(a.id, a.nome, a.login)
+    print(a.id, a.nome, a.username)
 
 separadores = session.query(Separador).all()
 for s in separadores:
-    print(s.id, s.nome, s.login)
+    print(s.id, s.nome, s.username)
 
 session.close()

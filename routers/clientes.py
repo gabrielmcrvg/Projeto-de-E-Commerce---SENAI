@@ -1,7 +1,9 @@
 from fastapi import APIRouter
 from sqlalchemy.orm import selectinload
+from sqlalchemy.exc import IntegrityError
 
 from database import SessionDep
+from exceptions.erros import CPFDuplicadoError
 from models.cliente import Cliente
 from schemas.cliente import ClienteComPedido, ClienteEntrada, ClientePatch, ClienteResposta
 from seguranca import gerar_hash
@@ -35,7 +37,11 @@ def criar_cliente(session: SessionDep, dados: ClienteEntrada):
     )
     novo_cliente.validar_cadastro()
     session.add(novo_cliente)
-    session.commit()
+    try:
+        session.commit()
+    except IntegrityError:
+        session.rollback()
+        raise CPFDuplicadoError(f"CPF {dados.cpf} ou username já cadastrado.")
     cliente_criado = obter_ou_404(session, Cliente, novo_cliente.id, "Cliente", options=[selectinload(Cliente.pedidos)])
     return cliente_criado
 
@@ -50,7 +56,11 @@ def atualizar_cliente(session: SessionDep, cliente_id: int, dados: ClienteEntrad
         else:
             setattr(cliente, campo, valor)
     cliente.validar_cadastro()
-    session.commit()
+    try:
+        session.commit()
+    except IntegrityError:
+        session.rollback()
+        raise CPFDuplicadoError(f"CPF {dados.cpf} ou username já cadastrado.")
     session.refresh(cliente)
     return cliente
 
@@ -63,7 +73,11 @@ def alterar_cliente(session: SessionDep, cliente_id: int, dados: ClientePatch):
     for campo, valor in mudancas.items():
         setattr(cliente, campo, valor)
     cliente.validar_cadastro()
-    session.commit()
+    try:
+        session.commit()
+    except IntegrityError:
+        session.rollback()
+        raise CPFDuplicadoError("CPF ou username já cadastrado.")
     session.refresh(cliente)
     return cliente
 
