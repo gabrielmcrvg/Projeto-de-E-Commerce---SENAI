@@ -1,8 +1,7 @@
 from database import SessionLocal
-from models.produto import Categoria, Produto
 from models.cliente import Cliente
-from models.usuario import Administrador, Separador
-from models.pedido import Pedido, ItemPedido
+from models.produto import Categoria, Produto
+from models.usuario import Administrador
 
 session = SessionLocal()
 

@@ -1,13 +1,10 @@
-from decimal import Decimal
+
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from exceptions.erros import ClienteInvalidoError, EnderecoInvalidoError, EstoqueInsuficienteError, PagamentoInvalidoError
+
 from models.usuario import Usuario
-from exceptions.erros import (
-    ClienteInvalidoError,
-    EnderecoInvalidoError,
-    PagamentoInvalidoError,
-    EstoqueInsuficienteError,
-)
 
 class Cliente(Usuario):
     __tablename__ = "clientes"
@@ -17,7 +14,7 @@ class Cliente(Usuario):
     telefone_celular: Mapped[str] = mapped_column(default="")
     endereco: Mapped[str] = mapped_column(default="")
 
-    pedidos: Mapped[list["Pedido"]] = relationship(back_populates="cliente", default_factory=list, init=False)
+    pedidos: Mapped[list["Pedido"]] = relationship(back_populates="cliente", default_factory=list, init=False) # type: ignore
 
     def validar_cadastro(self):
         if not self.email or self.email == 'sem@email.com':

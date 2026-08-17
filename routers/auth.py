@@ -1,12 +1,12 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+
 from database import SessionDep
 from models.usuario import Usuario
-from schemas.usuario import UsuarioEntrada, UsuarioResposta
-from seguranca import gerar_hash
-from typing import Annotated
-from schemas.usuario import Token
-from seguranca import verificar_senha, criar_token
+from schemas.usuario import Token, UsuarioEntrada, UsuarioResposta
+from seguranca import criar_token, gerar_hash, verificar_senha
 from utils.utils import obter_ou_404
 
 router = APIRouter(prefix="/usuarios", tags=['Autenticacao'])

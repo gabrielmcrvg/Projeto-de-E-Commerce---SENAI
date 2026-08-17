@@ -1,5 +1,6 @@
-from sqlalchemy.orm import Mapped, MappedAsDataclass, mapped_column
 from sqlalchemy import ForeignKey
+from sqlalchemy.orm import Mapped, MappedAsDataclass, mapped_column
+
 from database import Base
 
 class Usuario(Base, MappedAsDataclass, kw_only=True):

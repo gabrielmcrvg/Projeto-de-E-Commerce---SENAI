@@ -1,10 +1,12 @@
 from datetime import datetime
 from decimal import Decimal
+
 from sqlalchemy import ForeignKey, Numeric
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from database import Base
+from exceptions.erros import PedidoInvalidoError, ProdutoIndisponivelError, ValorInvalidoError
 from models.produto import Produto
-from exceptions.erros import ValorInvalidoError, ProdutoIndisponivelError, PedidoInvalidoError
 
 class Pedido(Base):
     __tablename__ = "pedidos"
@@ -13,7 +15,7 @@ class Pedido(Base):
     data_pedido: Mapped[datetime] = mapped_column(default=datetime.now)
     status: Mapped[str] = mapped_column(default="Pendente")
     cliente_id: Mapped[int] = mapped_column(ForeignKey("clientes.id"))
-    cliente: Mapped["Cliente"] = relationship(back_populates="pedidos")
+    cliente: Mapped["Cliente"] = relationship(back_populates="pedidos") # type: ignore
     itens_pedido: Mapped[list["ItemPedido"]] = relationship(back_populates="pedido", cascade="all, delete-orphan")
 
     def validar_novo_item(self, produto: Produto, quantidade: int):

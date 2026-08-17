@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import selectinload
-from database import SessionDep, SessionLocal
+
+from database import SessionDep
 from dependencias import Paginacao
-from exceptions.excecoes import RecursoNaoEncontrado
-from models.pedido import Pedido, ItemPedido
-from models.produto import Produto
 from models.cliente import Cliente
+from models.pedido import ItemPedido, Pedido
+from models.produto import Produto
 from schemas.pedido import PedidoEntrada, PedidoPatch, PedidoResposta
 from utils.utils import obter_ou_404
 

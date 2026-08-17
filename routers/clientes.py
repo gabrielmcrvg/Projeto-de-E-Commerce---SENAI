@@ -1,10 +1,9 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from sqlalchemy.orm import selectinload
-from database import SessionDep, SessionLocal
+
+from database import SessionDep
 from models.cliente import Cliente
-from models.pedido import Pedido
-from schemas.cliente import ClienteComPedido, ClienteEntrada, ClientePatch, ClienteResposta, PagamentoEntrada
-from schemas.pedido import PedidoResposta
+from schemas.cliente import ClienteComPedido, ClienteEntrada, ClientePatch, ClienteResposta
 from utils.utils import obter_ou_404
 
 router = APIRouter(prefix='/clientes', tags=['Clientes'])
@@ -71,11 +70,3 @@ def remover_cliente(session: SessionDep, cliente_id: int):
         session.commit()
         return {'mensagem': 'Cliente removido'}
     
-@router.post('/{cliente_id}/pedidos/{pedido_id}/pagar', response_model=PedidoResposta)
-def pagar_pedido(session: SessionDep, cliente_id: int, pedido_id: int, dados: PagamentoEntrada):
-        cliente = obter_ou_404(session, Cliente, cliente_id, "Cliente")
-        pedido = obter_ou_404(session, Pedido, pedido_id, "Pedido", options=[selectinload(Pedido.cliente), selectinload(Pedido.itens_pedido)])
-        cliente.realizar_pagamento(pedido, dados.valor_pago)
-        session.commit()
-        session.refresh(pedido)
-        return pedido

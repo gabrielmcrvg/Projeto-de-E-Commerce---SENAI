@@ -2,7 +2,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from database import Base
-from exceptions.erros import ValorInvalidoError, EstoqueInsuficienteError
+from exceptions.erros import EstoqueInsuficienteError, ValorInvalidoError
 
 class Produto(Base):
     __tablename__ = "produtos"

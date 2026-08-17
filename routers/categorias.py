@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import selectinload
+
 from database import SessionDep
 from dependencias import Paginacao
 from models.produto import Categoria

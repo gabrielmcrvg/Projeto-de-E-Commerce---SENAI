@@ -1,8 +1,9 @@
-from database import SessionLocal
 from sqlalchemy.orm import selectinload
-from models.produto import Categoria, Produto
+
+from database import SessionLocal
 from models.cliente import Cliente
 from models.pedido import Pedido
+from models.produto import Categoria, Produto
 from models.usuario import Administrador, Separador
 
 session = SessionLocal()

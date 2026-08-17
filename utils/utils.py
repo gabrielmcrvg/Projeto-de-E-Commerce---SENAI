@@ -1,13 +1,14 @@
 from fastapi import HTTPException, status
 from sqlalchemy import select
+
 from exceptions.excecoes import RecursoNaoEncontrado
 
 
 def obter_ou_404(session, model, id, nome: str, options: list = None):
-    stmt = select(model).where(model.id == id)
+    consulta = select(model).where(model.id == id)
     if options:
-        stmt = stmt.options(*options)
-    obj = session.execute(stmt).scalars().first()
+        consulta = consulta.options(*options) # traz os dados relacionados (tipo pedidos de um cliente) junto, sem precisar buscar depois
+    obj = session.execute(consulta).scalars().first()
     if obj is None:
         raise RecursoNaoEncontrado(nome)
     return obj
