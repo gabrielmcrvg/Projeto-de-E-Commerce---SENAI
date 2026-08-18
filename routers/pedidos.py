@@ -67,7 +67,6 @@ def atualizar_pedido(session: SessionDep, pedido_id: int, dados: PedidoEntrada):
     pedido.itens_pedido.clear()
     pedido.itens_pedido.extend(novos_itens)
     session.commit()
-    session.refresh(pedido)
     return pedido
 
 
@@ -85,7 +84,6 @@ def alterar_pedido(session: SessionDep, pedido_id: int, dados: PedidoPatch):
     for campo, valor in mudancas.items():
         setattr(pedido, campo, valor)
     session.commit()
-    session.refresh(pedido)
     return pedido
 
 

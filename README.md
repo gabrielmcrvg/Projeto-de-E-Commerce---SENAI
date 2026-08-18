@@ -25,7 +25,7 @@ A aplicação expõe endpoints para gerenciar produtos, categorias, clientes e p
 ├── exceptions/          # Exceções customizadas
 │   ├── erros.py             # Hierarquia de exceções de domínio (LojaError e subclasses)
 │   └── excecoes.py          # RecursoNaoEncontrado, usada pelo obter_ou_404
-├── models/              # Modelos SQLAlchemy: Usuario, Administrador, Separador, Cliente, Categoria, Produto, Pedido, ItemPedido
+├── models/              # Modelos SQLAlchemy: Usuario (com papel), Cliente, Categoria, Produto, Pedido, ItemPedido
 ├── routers/              # Rotas da API
 │   ├── auth.py               # /usuarios — registro, login/token, listagem
 │   ├── categorias.py         # /categorias — CRUD de categorias
@@ -183,12 +183,12 @@ A API é organizada em routers, cada um responsável por um recurso. Todos retor
 
 ### Usuario (classe base)
 
-Tabela `usuarios`, usando herança de tabelas (*joined table inheritance*) do SQLAlchemy. Campos: `id`, `username` (único), `hashed_password`, `nome`, `email`. É essa entidade base que o endpoint `/usuarios/registrar` cria.
+Tabela `usuarios`. Campos: `id`, `username` (único), `hashed_password`, `nome`, `email`, `papel` (texto livre, default `"Comum"`). É essa entidade base que o endpoint `/usuarios/registrar` cria.
 
-A partir dela derivam três tipos de usuário, cada um em sua própria tabela:
+O `papel` identifica o tipo de usuário: `"Admin"` (administrador), `"CLT"` (separador/funcionário) ou `"Comum"` (padrão, usado também pelos clientes). Não há tabelas nem classes separadas por papel — é só esse campo na própria tabela `usuarios`.
 
-- **Administrador** (`permissao = 1`)
-- **Separador** (`permissao = 2`)
+A partir da classe base deriva um tipo de usuário com tabela própria (*joined table inheritance*):
+
 - **Cliente** — o único tipo exposto via API própria (`/clientes`), com campos adicionais: `cpf` (único), `telefone_celular`, `endereco`, e relação com seus `pedidos`.
 
 **Regras de negócio do Cliente:**

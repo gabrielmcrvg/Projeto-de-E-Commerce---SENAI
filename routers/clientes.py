@@ -40,7 +40,6 @@ def criar_cliente(session: SessionDep, dados: ClienteEntrada):
     try:
         session.commit()
     except IntegrityError:
-        session.rollback()
         raise CPFDuplicadoError(f"CPF {dados.cpf} ou username já cadastrado.")
     cliente_criado = obter_ou_404(session, Cliente, novo_cliente.id, "Cliente", options=[selectinload(Cliente.pedidos)])
     return cliente_criado
@@ -59,9 +58,7 @@ def atualizar_cliente(session: SessionDep, cliente_id: int, dados: ClienteEntrad
     try:
         session.commit()
     except IntegrityError:
-        session.rollback()
         raise CPFDuplicadoError(f"CPF {dados.cpf} ou username já cadastrado.")
-    session.refresh(cliente)
     return cliente
 
 # =-= PATCH =-=
@@ -76,9 +73,7 @@ def alterar_cliente(session: SessionDep, cliente_id: int, dados: ClientePatch):
     try:
         session.commit()
     except IntegrityError:
-        session.rollback()
         raise CPFDuplicadoError("CPF ou username já cadastrado.")
-    session.refresh(cliente)
     return cliente
 
 # =-= DELETE =-=

@@ -36,7 +36,6 @@ def criar_produto(session: SessionDep, produto: ProdutoEntrada):
     novo = Produto(**produto.model_dump())
     session.add(novo)
     session.commit()
-    session.refresh(novo)
     return novo
 
 # =-= PUT =-=
@@ -48,7 +47,6 @@ def atualizar_produto(session: SessionDep, produto_id: int, dados: ProdutoEntrad
     for campo, valor in dados.model_dump().items():
         setattr(produto, campo, valor)
     session.commit()
-    session.refresh(produto)
     return produto
 
 # =-= PATCH =-=
@@ -62,7 +60,6 @@ def alterar_produto(session: SessionDep, produto_id: int, dados: ProdutoPatch):
     for campo, valor in mudancas.items():
         setattr(produto, campo, valor)
     session.commit()
-    session.refresh(produto)
     return produto
 
 # =-= DELETE =-=

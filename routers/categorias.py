@@ -27,7 +27,6 @@ def criar_categoria(session: SessionDep, categoria: CategoriaEntrada):
         nova = Categoria(**categoria.model_dump())
         session.add(nova)
         session.commit()
-        session.refresh(nova)
         return nova
 
 # =-= PUT =-=
@@ -37,7 +36,6 @@ def atualizar_categoria(session: SessionDep, categoria_id: int, dados: Categoria
         categoria = obter_ou_404(session, Categoria, categoria_id, "Categoria", options=[selectinload(Categoria.produtos)])
         categoria.nome = dados.nome
         session.commit()
-        session.refresh(categoria)
         return categoria
 
 # =-= PATCH =-=
@@ -49,7 +47,6 @@ def alterar_categoria(session: SessionDep, categoria_id: int, dados: CategoriaPa
         for campo, valor in mudancas.items():
             setattr(categoria, campo, valor)
         session.commit()
-        session.refresh(categoria)
         return categoria
 
 # =-= DELETE =-=
