@@ -4,7 +4,7 @@ from database import SessionLocal
 from models.cliente import Cliente
 from models.pedido import Pedido
 from models.produto import Categoria, Produto
-from models.usuario import Administrador, Separador
+from models.usuario import Usuario
 
 session = SessionLocal()
 
@@ -24,11 +24,11 @@ pedidos = session.query(Pedido).all()
 for p in pedidos:
     print(p.id, p.cliente_id)
 
-admins = session.query(Administrador).all()
+admins = session.query(Usuario).filter(Usuario.papel == "Admin").all()
 for a in admins:
     print(a.id, a.nome, a.username)
 
-separadores = session.query(Separador).all()
+separadores = session.query(Usuario).filter(Usuario.papel == "CLT").all()
 for s in separadores:
     print(s.id, s.nome, s.username)
 

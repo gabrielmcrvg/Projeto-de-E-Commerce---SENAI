@@ -2,7 +2,7 @@ from database import SessionLocal
 from models.cliente import Cliente
 from models.pedido import ItemPedido, Pedido
 from models.produto import Categoria, Produto
-from models.usuario import Administrador, Separador
+from models.usuario import Usuario
 from seguranca import gerar_hash
 
 session = SessionLocal()
@@ -33,13 +33,13 @@ session.commit()
 session.refresh(novo_cliente)
 print(f"Cliente criado! ID: {novo_cliente.id}")
 
-admin = Administrador(username="admin_chefe", hashed_password=gerar_hash("admin123"), nome="Gerente Geral")
+admin = Usuario(username="admin_chefe", hashed_password=gerar_hash("admin123"), nome="Gerente Geral", papel="Admin")
 session.add(admin)
 session.commit()
 session.refresh(admin)
 print(f"Admin criado! ID: {admin.id}")
 
-separador = Separador(username="separador_ana", hashed_password=gerar_hash("sep123"), nome="Ana Separadora")
+separador = Usuario(username="separador_ana", hashed_password=gerar_hash("sep123"), nome="Ana Separadora", papel="CLT")
 session.add(separador)
 session.commit()
 session.refresh(separador)
