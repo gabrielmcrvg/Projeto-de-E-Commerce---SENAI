@@ -6,7 +6,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from database import SessionDep
 from models.usuario import Usuario
 from schemas.usuario import Token, UsuarioEntrada, UsuarioResposta
-from seguranca import criar_token, gerar_hash, verificar_senha
+from seguranca import AdminAtual, criar_token, gerar_hash, verificar_senha
 from utils.utils import obter_ou_404
 
 router = APIRouter(prefix="/usuarios", tags=['Autenticacao'])
@@ -14,7 +14,7 @@ router = APIRouter(prefix="/usuarios", tags=['Autenticacao'])
 # =-= GET =-=
 
 @router.get("/listar_usuarios", response_model=list[UsuarioResposta])
-def listar_usuarios(session: SessionDep):
+def listar_usuarios(session: SessionDep, usuario: AdminAtual):
     return session.query(Usuario).all()
 
 # =-= POST =-=
@@ -37,7 +37,7 @@ def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], session: S
 # =-= DELETE =-=
 
 @router.delete("/{usuario_id}", status_code=204)
-def deletar_usuario(usuario_id: int, session: SessionDep):
+def deletar_usuario(usuario_id: int, session: SessionDep, usuario_logado: AdminAtual):
     usuario = obter_ou_404(session, Usuario, usuario_id, "Usuario")
     session.delete(usuario)
     session.commit()

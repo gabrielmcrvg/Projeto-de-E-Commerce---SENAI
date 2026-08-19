@@ -9,6 +9,7 @@ from models.cliente import Cliente
 from models.pedido import ItemPedido, Pedido
 from models.produto import Produto
 from schemas.pedido import PedidoEntrada, PedidoPatch, PedidoResposta
+from seguranca import AdminAtual, UsuarioAtual
 from utils.utils import obter_ou_404
 
 router = APIRouter(prefix='/pedidos', tags=['Pedidos'])
@@ -36,18 +37,18 @@ def montar_itens_pedido(session: SessionDep, pedido: Pedido, itens):
 # =-= GET =-=
 
 @router.get('/listar_pedidos', response_model=list[PedidoResposta])
-def listar_pedidos(session: SessionDep, pag: Paginacao = Depends()):
+def listar_pedidos(session: SessionDep, usuario: AdminAtual, pag: Paginacao = Depends()):
     return session.query(Pedido).options(selectinload(Pedido.cliente), selectinload(Pedido.itens_pedido)).offset(pag.skip).limit(pag.limit).all()
 
 @router.get('/{pedido_id}', response_model=PedidoResposta)
-def buscar_pedido(session: SessionDep, pedido_id: int):
+def buscar_pedido(session: SessionDep, pedido_id: int, usuario: UsuarioAtual):
     pedido = obter_ou_404(session, Pedido, pedido_id, "Pedido", options=[selectinload(Pedido.cliente), selectinload(Pedido.itens_pedido)])
     return pedido
 
 # =-= POST =-=
 
 @router.post('/criar_pedido', status_code=201, response_model=PedidoResposta)
-def criar_pedido(session: SessionDep, dados: PedidoEntrada):
+def criar_pedido(session: SessionDep, dados: PedidoEntrada, usuario: UsuarioAtual):
     validar_cliente(dados.cliente_id, session)
     novo_pedido = Pedido(cliente_id = dados.cliente_id)
     novo_pedido.itens_pedido.extend(montar_itens_pedido(session, novo_pedido, dados.itens))
@@ -59,7 +60,7 @@ def criar_pedido(session: SessionDep, dados: PedidoEntrada):
 # =-= PUT =-=
 
 @router.put('/{pedido_id}', response_model=PedidoResposta)
-def atualizar_pedido(session: SessionDep, pedido_id: int, dados: PedidoEntrada):
+def atualizar_pedido(session: SessionDep, pedido_id: int, dados: PedidoEntrada, usuario: UsuarioAtual):
     pedido = obter_ou_404(session, Pedido, pedido_id, "Pedido", options=[selectinload(Pedido.cliente), selectinload(Pedido.itens_pedido)])
     validar_cliente(dados.cliente_id, session)
     novos_itens = montar_itens_pedido(session, pedido, dados.itens)
@@ -67,13 +68,14 @@ def atualizar_pedido(session: SessionDep, pedido_id: int, dados: PedidoEntrada):
     pedido.itens_pedido.clear()
     pedido.itens_pedido.extend(novos_itens)
     session.commit()
+    session.refresh(pedido)
     return pedido
 
 
 # =-= PATCH =-=
 
 @router.patch('/{pedido_id}', response_model=PedidoResposta)
-def alterar_pedido(session: SessionDep, pedido_id: int, dados: PedidoPatch):
+def alterar_pedido(session: SessionDep, pedido_id: int, dados: PedidoPatch, usuario: UsuarioAtual):
     pedido = obter_ou_404(session, Pedido, pedido_id, "Pedido", options=[selectinload(Pedido.cliente), selectinload(Pedido.itens_pedido)])
     mudancas = dados.model_dump(exclude_unset=True)
     if 'cliente_id' in mudancas:
@@ -84,13 +86,14 @@ def alterar_pedido(session: SessionDep, pedido_id: int, dados: PedidoPatch):
     for campo, valor in mudancas.items():
         setattr(pedido, campo, valor)
     session.commit()
+    session.refresh(pedido)
     return pedido
 
 
 # =-= DELETE =-=
 
 @router.delete('/{pedido_id}')
-def remover_pedido(session: SessionDep, pedido_id: int):
+def remover_pedido(session: SessionDep, pedido_id: int, usuario: AdminAtual):
     pedido = obter_ou_404(session, Pedido, pedido_id, "Pedido")
     session.delete(pedido)
     session.commit()
