@@ -17,6 +17,7 @@ class ItemPedidoResposta(BaseModel):
     id: int
     produto_id: int
     quantidade: int
+    preco_unitario: Decimal
 
 class PedidoResposta(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -24,6 +25,7 @@ class PedidoResposta(BaseModel):
     id: int
     cliente_id: int
     itens: list[ItemPedidoResposta] = Field(validation_alias='itens_pedido')
+    valor_total: Decimal
     data_pedido: datetime
     status: str
 

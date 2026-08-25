@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meus Pedidos</title>
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --card: #ffffff;
+    --text: #1c1f26;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --success-bg: #dcfce7;
+    --success-text: #15803d;
+    --warning-bg: #fef3c7;
+    --warning-text: #92400e;
+    --danger-bg: #fee2e2;
+    --danger-text: #b91c1c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 32px 20px 80px; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  .subtitle { color: var(--muted); margin: 0 0 28px; font-size: 0.95rem; }
+
+  #login-view { max-width: 360px; margin: 60px auto 0; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+  }
+  label { display: block; font-size: 0.85rem; color: var(--muted); margin: 14px 0 6px; }
+  input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.95rem;
+  }
+  input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  button {
+    cursor: pointer;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+  .btn-primary {
+    width: 100%;
+    margin-top: 20px;
+    padding: 11px;
+    background: var(--accent);
+    color: white;
+  }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-primary:disabled { opacity: 0.6; cursor: default; }
+  .error-msg {
+    margin-top: 14px;
+    padding: 10px 12px;
+    background: var(--danger-bg);
+    color: var(--danger-text);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    display: none;
+  }
+
+  #app-view { display: none; }
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+  .btn-secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    color: var(--text);
+    border-radius: 8px;
+  }
+  .btn-secondary:hover { background: var(--card); }
+
+  .pedido-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+  }
+  .pedido-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .pedido-id { font-weight: 600; font-size: 1.02rem; }
+  .pedido-data { color: var(--muted); font-size: 0.82rem; margin-top: 2px; }
+  .badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .badge-Pendente { background: var(--warning-bg); color: var(--warning-text); }
+  .badge-Pago { background: var(--success-bg); color: var(--success-text); }
+  .badge-Cancelado { background: var(--danger-bg); color: var(--danger-text); }
+
+  .itens-list { border-top: 1px solid var(--border); padding-top: 10px; }
+  .item-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.88rem;
+    padding: 4px 0;
+  }
+  .item-nome { color: var(--text); }
+  .item-qtd { color: var(--muted); }
+  .pedido-total {
+    display: flex;
+    justify-content: space-between;
+    border-top: 1px solid var(--border);
+    margin-top: 10px;
+    padding-top: 10px;
+    font-weight: 600;
+  }
+
+  .empty-state, .loading-state {
+    text-align: center;
+    color: var(--muted);
+    padding: 60px 20px;
+  }
+</style>
+</head>
+<body>
+
+  <div id="login-view" class="wrap">
+    <h1 style="text-align:center;">Minha Loja</h1>
+    <p class="subtitle" style="text-align:center;">Entre para ver seus pedidos</p>
+    <div class="card">
+      <label for="username">Usuário</label>
+      <input id="username" type="text" autocomplete="username">
+      <label for="password">Senha</label>
+      <input id="password" type="password" autocomplete="current-password">
+      <button id="login-btn" class="btn-primary">Entrar</button>
+      <div id="login-error" class="error-msg"></div>
+    </div>
+  </div>
+
+  <div id="app-view" class="wrap">
+    <div class="topbar">
+      <div>
+        <h1>Meus Pedidos</h1>
+        <p class="subtitle" style="margin:0;">Histórico de compras</p>
+      </div>
+      <button id="logout-btn" class="btn-secondary">Sair</button>
+    </div>
+    <div id="pedidos-container">
+      <div class="loading-state">Carregando pedidos...</div>
+    </div>
+  </div>
+
+<script>
+  // Ajuste aqui se a API rodar em outro host/porta
+  const API_BASE_URL = "http://localhost:8000";
+
+  let accessToken = null;   // guardado em memoria (recarregar a pagina exige login de novo)
+  let produtosPorId = {};   // cache: produto_id -> nome, pra mostrar nos itens do pedido
+
+  const loginView = document.getElementById("login-view");
+  const appView = document.getElementById("app-view");
+  const loginBtn = document.getElementById("login-btn");
+  const logoutBtn = document.getElementById("logout-btn");
+  const loginError = document.getElementById("login-error");
+  const pedidosContainer = document.getElementById("pedidos-container");
+
+  function mostrarErroLogin(msg) {
+    loginError.textContent = msg;
+    loginError.style.display = "block";
+  }
+
+  function formatarMoeda(valor) {
+    return Number(valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  }
+
+  function formatarData(isoString) {
+    const data = new Date(isoString);
+    return data.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+  }
+
+  async function fazerLogin(username, password) {
+    const corpo = new URLSearchParams();
+    corpo.append("username", username);
+    corpo.append("password", password);
+
+    const resposta = await fetch(`${API_BASE_URL}/usuarios/token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: corpo,
+    });
+
+    if (!resposta.ok) {
+      if (resposta.status === 401) throw new Error("Usuário ou senha inválidos.");
+      throw new Error("Não foi possível entrar. Tente novamente.");
+    }
+
+    const dados = await resposta.json();
+    return dados.access_token;
+  }
+
+  async function chamarApi(caminho) {
+    const resposta = await fetch(`${API_BASE_URL}${caminho}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    if (resposta.status === 401) {
+      voltarParaLogin();
+      throw new Error("Sessão expirada, entre novamente.");
+    }
+
+    if (!resposta.ok) {
+      const erro = await resposta.json().catch(() => ({}));
+      const detalhe = typeof erro.detail === "string" ? erro.detail : "Erro ao consultar a API.";
+      throw new Error(detalhe);
+    }
+
+    return resposta.json();
+  }
+
+  async function carregarProdutos() {
+    try {
+      const produtos = await chamarApi("/produtos/listar_produtos?limit=1000");
+      produtosPorId = {};
+      produtos.forEach((p) => { produtosPorId[p.id] = p.nome; });
+    } catch {
+      // se falhar, os itens aparecem so com "Produto #id" - nao trava a tela
+    }
+  }
+
+  function nomeDoProduto(produtoId) {
+    return produtosPorId[produtoId] || `Produto #${produtoId}`;
+  }
+
+  function renderizarPedidos(pedidos) {
+    if (pedidos.length === 0) {
+      pedidosContainer.innerHTML = '<div class="empty-state">Você ainda não fez nenhum pedido.</div>';
+      return;
+    }
+
+    const ordenados = [...pedidos].sort((a, b) => new Date(b.data_pedido) - new Date(a.data_pedido));
+
+    pedidosContainer.innerHTML = ordenados.map((pedido) => `
+      <div class="pedido-card">
+        <div class="pedido-head">
+          <div>
+            <div class="pedido-id">Pedido #${pedido.id}</div>
+            <div class="pedido-data">${formatarData(pedido.data_pedido)}</div>
+          </div>
+          <span class="badge badge-${pedido.status}">${pedido.status}</span>
+        </div>
+        <div class="itens-list">
+          ${pedido.itens.map((item) => `
+            <div class="item-row">
+              <span class="item-nome">${nomeDoProduto(item.produto_id)} <span class="item-qtd">× ${item.quantidade}</span></span>
+              <span>${formatarMoeda(item.preco_unitario * item.quantidade)}</span>
+            </div>
+          `).join("")}
+        </div>
+        <div class="pedido-total">
+          <span>Total</span>
+          <span>${formatarMoeda(pedido.valor_total)}</span>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  async function carregarMeusPedidos() {
+    pedidosContainer.innerHTML = '<div class="loading-state">Carregando pedidos...</div>';
+    try {
+      await carregarProdutos();
+      const pedidos = await chamarApi("/pedidos/meus_pedidos?limit=100");
+      renderizarPedidos(pedidos);
+    } catch (erro) {
+      pedidosContainer.innerHTML = `<div class="empty-state">${erro.message}</div>`;
+    }
+  }
+
+  function voltarParaLogin() {
+    accessToken = null;
+    appView.style.display = "none";
+    loginView.style.display = "block";
+    document.getElementById("password").value = "";
+  }
+
+  function entrarNaApp() {
+    loginView.style.display = "none";
+    appView.style.display = "block";
+    carregarMeusPedidos();
+  }
+
+  loginBtn.addEventListener("click", async () => {
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value;
+    loginError.style.display = "none";
+
+    if (!username || !password) {
+      mostrarErroLogin("Preencha usuário e senha.");
+      return;
+    }
+
+    loginBtn.disabled = true;
+    loginBtn.textContent = "Entrando...";
+    try {
+      accessToken = await fazerLogin(username, password);
+      entrarNaApp();
+    } catch (erro) {
+      mostrarErroLogin(erro.message);
+    } finally {
+      loginBtn.disabled = false;
+      loginBtn.textContent = "Entrar";
+    }
+  });
+
+  document.getElementById("password").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") loginBtn.click();
+  });
+
+  logoutBtn.addEventListener("click", voltarParaLogin);
+</script>
+</body>
+</html>

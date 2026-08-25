@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from database import Base, engine
 from routers import auth, categorias, clientes, produtos, pedidos
@@ -9,6 +10,14 @@ import models
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title='API - TFU')
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=['*'],
+    allow_credentials=False,
+    allow_methods=['*'],
+    allow_headers=['*'],
+)
 
 app.include_router(produtos.router)
 app.include_router(pedidos.router)

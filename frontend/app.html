@@ -1,0 +1,1105 @@
+<!doctype html>
+<!--
+  Frontend completo da API de E-Commerce (HTML + CSS + JS puro, sem build).
+  Como usar:
+    1) Suba a API:  uvicorn main:app --reload
+    2) Abra este arquivo direto no navegador (duplo clique).
+  Contas Admin/CLT só podem ser criadas pelo script criar_admin.py (fora do site).
+  Contas de Cliente podem ser criadas pela própria tela de cadastro.
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loja</title>
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --card: #ffffff;
+    --text: #1c1f26;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --success-bg: #dcfce7;
+    --success-text: #15803d;
+    --warning-bg: #fef3c7;
+    --warning-text: #92400e;
+    --danger-bg: #fee2e2;
+    --danger-text: #b91c1c;
+    --danger: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  h2 { font-size: 1.15rem; margin: 0; }
+  .hidden { display: none !important; }
+  .container { max-width: 1080px; margin: 0 auto; padding: 28px 20px 80px; }
+  .container-sm { max-width: 640px; }
+
+  #navbar {
+    display: none;
+    align-items: center;
+    gap: 20px;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .nav-brand { font-weight: 700; margin-right: auto; }
+  .nav-links { display: flex; gap: 6px; flex-wrap: wrap; }
+  .nav-link {
+    background: transparent;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    color: var(--text);
+  }
+  .nav-link:hover { background: var(--bg); }
+
+  button { font-family: inherit; }
+  .btn {
+    cursor: pointer;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 9px 16px;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-secondary:hover { background: var(--bg); }
+  .btn-danger { background: var(--danger-bg); color: var(--danger-text); }
+  .btn-danger:hover { background: var(--danger); color: #fff; }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-sm { padding: 6px 10px; font-size: 0.82rem; }
+  button:disabled { opacity: 0.5; cursor: default; }
+
+  label { display: block; font-size: 0.85rem; color: var(--muted); margin: 14px 0 6px; }
+  input, select, textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.92rem;
+    font-family: inherit;
+    background: #fff;
+    color: var(--text);
+  }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  textarea { resize: vertical; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+
+  .auth-wrap { max-width: 400px; margin: 50px auto 0; padding: 0 20px; }
+  .auth-card { margin-top: 20px; }
+  .tabs { display: flex; gap: 4px; margin-bottom: 18px; border-bottom: 1px solid var(--border); }
+  .tab-btn {
+    flex: 1; background: none; border: none; padding: 10px; cursor: pointer;
+    color: var(--muted); font-weight: 600; border-bottom: 2px solid transparent;
+  }
+  .tab-btn.active { color: var(--accent); border-color: var(--accent); }
+  .msg { margin-top: 14px; padding: 10px 12px; border-radius: 8px; font-size: 0.85rem; }
+  .msg-erro { background: var(--danger-bg); color: var(--danger-text); }
+  .msg-ok { background: var(--success-bg); color: var(--success-text); }
+  .auth-hint { text-align: center; color: var(--muted); font-size: 0.8rem; margin-top: 16px; }
+  .field-readonly { font-size: 0.9rem; margin-bottom: 6px; }
+
+  .view-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 12px; flex-wrap: wrap; }
+
+  .table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .table th, .table td { text-align: left; padding: 10px 14px; font-size: 0.88rem; border-bottom: 1px solid var(--border); }
+  .table th { color: var(--muted); font-weight: 600; background: var(--bg); }
+  .table tr:last-child td { border-bottom: none; }
+  .col-acoes { display: flex; gap: 6px; justify-content: flex-end; }
+  .table-wrap { overflow-x: auto; }
+
+  .loja-layout { display: grid; grid-template-columns: 1fr 300px; gap: 24px; align-items: start; }
+  .loja-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; gap: 12px; flex-wrap: wrap; }
+  .loja-header select { width: auto; min-width: 200px; }
+  .grid-produtos { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+  .produto-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 4px; }
+  .produto-nome { font-weight: 600; }
+  .produto-categoria { font-size: 0.75rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.03em; }
+  .produto-descricao { font-size: 0.82rem; color: var(--muted); flex: 1; margin: 4px 0; }
+  .produto-preco { font-weight: 700; font-size: 1.05rem; }
+  .produto-estoque { font-size: 0.78rem; color: var(--muted); }
+  .produto-acao { display: flex; gap: 8px; margin-top: 8px; }
+  .produto-acao input { width: 60px; padding: 8px; }
+
+  .carrinho-painel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; position: sticky; top: 80px; }
+  .carrinho-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.86rem; gap: 8px; }
+  .carrinho-item:last-child { border-bottom: none; }
+  .btn-remover { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1rem; }
+  .btn-remover:hover { color: var(--danger-text); }
+  .carrinho-total { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 1rem; }
+
+  .pedido-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; margin-bottom: 16px; }
+  .pedido-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+  .pedido-id { font-weight: 600; font-size: 1.02rem; }
+  .pedido-data { color: var(--muted); font-size: 0.82rem; margin-top: 2px; }
+  .badge { font-size: 0.75rem; font-weight: 600; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+  .badge-Pendente { background: var(--warning-bg); color: var(--warning-text); }
+  .badge-Pago { background: var(--success-bg); color: var(--success-text); }
+  .badge-Cancelado { background: var(--danger-bg); color: var(--danger-text); }
+  .itens-list { border-top: 1px solid var(--border); padding-top: 10px; }
+  .item-row { display: flex; justify-content: space-between; font-size: 0.88rem; padding: 4px 0; }
+  .item-qtd { color: var(--muted); }
+  .pedido-total { display: flex; justify-content: space-between; border-top: 1px solid var(--border); margin-top: 10px; padding-top: 10px; font-weight: 600; }
+  .pedido-acoes { display: flex; gap: 8px; margin-top: 12px; }
+
+  .empty-state, .loading-state { text-align: center; color: var(--muted); padding: 60px 20px; }
+
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+    display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px;
+  }
+  .modal-box { background: var(--card); border-radius: 12px; padding: 22px; width: 100%; max-width: 420px; max-height: 90vh; overflow-y: auto; }
+  .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .btn-fechar { background: none; border: none; font-size: 1.1rem; cursor: pointer; color: var(--muted); }
+
+  #toast-container { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 200; }
+  .toast { padding: 12px 16px; border-radius: 8px; font-size: 0.88rem; box-shadow: 0 4px 12px rgba(0,0,0,0.12); opacity: 1; transition: opacity 0.3s; max-width: 320px; }
+  .toast-ok { background: #1c1f26; color: #fff; }
+  .toast-erro { background: var(--danger-text); color: #fff; }
+  .toast-saindo { opacity: 0; }
+
+  @media (max-width: 800px) {
+    .loja-layout { grid-template-columns: 1fr; }
+    .carrinho-painel { position: static; }
+  }
+</style>
+</head>
+<body>
+  <nav id="navbar"></nav>
+  <main id="app-content"></main>
+  <div id="toast-container"></div>
+  <div id="modal-root"></div>
+
+<script>
+  // ==================== CONFIG ====================
+  const API_BASE_URL = "http://localhost:8000";
+
+  // ==================== ESTADO (em memória - some ao recarregar a página) ====================
+  const estado = {
+    token: null,
+    papel: null,        // 'admin' | 'cliente' | 'sem_acesso' | null
+    clienteEu: null,     // dados de /clientes/eu quando papel === 'cliente'
+    carrinho: [],        // [{produto_id, nome, preco, quantidade}]
+    cacheProdutos: [],
+    cacheCategorias: [],
+    cacheClientes: [],
+  };
+
+  const appContent = document.getElementById("app-content");
+
+  // ==================== HELPERS ====================
+  function escapeHtml(valor) {
+    if (valor === null || valor === undefined) return "";
+    return String(valor)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
+  }
+
+  function formatarMoeda(valor) {
+    return Number(valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  }
+
+  function formatarData(isoString) {
+    const data = new Date(isoString);
+    return data.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+  }
+
+  function toast(mensagem, tipo) {
+    const container = document.getElementById("toast-container");
+    const el = document.createElement("div");
+    el.className = `toast ${tipo === "erro" ? "toast-erro" : "toast-ok"}`;
+    el.textContent = mensagem;
+    container.appendChild(el);
+    setTimeout(() => el.classList.add("toast-saindo"), 2500);
+    setTimeout(() => el.remove(), 3000);
+  }
+
+  function abrirModal(titulo, conteudoHtml) {
+    const root = document.getElementById("modal-root");
+    root.innerHTML = `
+      <div class="modal-overlay" onclick="if(event.target===this) fecharModal()">
+        <div class="modal-box">
+          <div class="modal-head">
+            <h2>${escapeHtml(titulo)}</h2>
+            <button class="btn-fechar" onclick="fecharModal()">✕</button>
+          </div>
+          <div class="modal-body">${conteudoHtml}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function fecharModal() {
+    document.getElementById("modal-root").innerHTML = "";
+  }
+
+  // ==================== CLIENTE DA API ====================
+  function extrairMensagemErro(corpo) {
+    if (!corpo) return "Erro inesperado ao falar com a API.";
+    if (typeof corpo.detail === "string") return corpo.detail;
+    if (Array.isArray(corpo.detail)) {
+      return corpo.detail.map((e) => `${(e.loc || []).slice(1).join(".")}: ${e.msg}`).join(" | ");
+    }
+    return "Erro inesperado ao falar com a API.";
+  }
+
+  async function apiFetch(caminho, opcoes = {}) {
+    const headers = Object.assign({}, opcoes.headers);
+    if (estado.token) headers["Authorization"] = `Bearer ${estado.token}`;
+    if (typeof opcoes.body === "string") headers["Content-Type"] = "application/json";
+
+    const resposta = await fetch(`${API_BASE_URL}${caminho}`, { ...opcoes, headers });
+
+    if (resposta.status === 401) {
+      logout();
+      throw new Error("Sessão expirada. Entre novamente.");
+    }
+    if (resposta.status === 204) return null;
+
+    let corpo = null;
+    try { corpo = await resposta.json(); } catch { corpo = null; }
+
+    if (!resposta.ok) throw new Error(extrairMensagemErro(corpo));
+    return corpo;
+  }
+
+  async function loginRequest(username, password) {
+    const corpo = new URLSearchParams({ username, password });
+    const resposta = await fetch(`${API_BASE_URL}/usuarios/token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: corpo,
+    });
+    if (!resposta.ok) {
+      if (resposta.status === 401) throw new Error("Usuário ou senha inválidos.");
+      throw new Error("Não foi possível entrar. Tente novamente.");
+    }
+    const dados = await resposta.json();
+    return dados.access_token;
+  }
+
+  const api = {
+    criarCliente: (dados) => apiFetch("/clientes/criar_cliente", { method: "POST", body: JSON.stringify(dados) }),
+    clienteEu: () => apiFetch("/clientes/eu"),
+    atualizarClienteEu: (dados) => apiFetch("/clientes/eu", { method: "PATCH", body: JSON.stringify(dados) }),
+
+    listarCategorias: () => apiFetch("/categorias/listar_categorias?limit=200"),
+    criarCategoria: (dados) => apiFetch("/categorias/criar_categoria", { method: "POST", body: JSON.stringify(dados) }),
+    atualizarCategoria: (id, dados) => apiFetch(`/categorias/${id}`, { method: "PATCH", body: JSON.stringify(dados) }),
+    removerCategoria: (id) => apiFetch(`/categorias/${id}`, { method: "DELETE" }),
+
+    listarProdutos: () => apiFetch("/produtos/listar_produtos?limit=200"),
+    criarProduto: (dados) => apiFetch("/produtos/criar_produto", { method: "POST", body: JSON.stringify(dados) }),
+    atualizarProduto: (id, dados) => apiFetch(`/produtos/${id}`, { method: "PATCH", body: JSON.stringify(dados) }),
+    removerProduto: (id) => apiFetch(`/produtos/${id}`, { method: "DELETE" }),
+
+    meusPedidos: () => apiFetch("/pedidos/meus_pedidos?limit=200"),
+    criarPedido: (dados) => apiFetch("/pedidos/criar_pedido", { method: "POST", body: JSON.stringify(dados) }),
+    pagarPedido: (id, valor_pago) => apiFetch(`/pedidos/${id}/pagar`, { method: "POST", body: JSON.stringify({ valor_pago }) }),
+    alterarStatusPedido: (id, status) => apiFetch(`/pedidos/${id}`, { method: "PATCH", body: JSON.stringify({ status }) }),
+    listarPedidosAdmin: () => apiFetch("/pedidos/listar_pedidos?limit=200"),
+    removerPedido: (id) => apiFetch(`/pedidos/${id}`, { method: "DELETE" }),
+
+    listarClientesAdmin: () => apiFetch("/clientes/listar_clientes"),
+    atualizarClienteAdmin: (id, dados) => apiFetch(`/clientes/${id}`, { method: "PATCH", body: JSON.stringify(dados) }),
+    removerClienteAdmin: (id) => apiFetch(`/clientes/${id}`, { method: "DELETE" }),
+
+    listarUsuariosAdmin: () => apiFetch("/usuarios/listar_usuarios"),
+    removerUsuarioAdmin: (id) => apiFetch(`/usuarios/${id}`, { method: "DELETE" }),
+  };
+
+  // ==================== SESSÃO / NAVEGAÇÃO ====================
+  async function detectarPapel() {
+    let clienteInfo = null;
+    try { clienteInfo = await api.clienteEu(); } catch { /* não é cliente */ }
+    estado.clienteEu = clienteInfo;
+
+    let ehAdmin = false;
+    try { await api.listarUsuariosAdmin(); ehAdmin = true; } catch { /* não é admin */ }
+
+    if (ehAdmin) estado.papel = "admin";
+    else if (clienteInfo) estado.papel = "cliente";
+    else estado.papel = "sem_acesso";
+  }
+
+  function montarNavbar() {
+    const nav = document.getElementById("navbar");
+    if (!estado.token) { nav.style.display = "none"; nav.innerHTML = ""; return; }
+    nav.style.display = "flex";
+
+    let links = "";
+    if (estado.papel === "admin") {
+      links = `
+        <button class="nav-link" onclick="mostrarView('adminProdutos')">Produtos</button>
+        <button class="nav-link" onclick="mostrarView('adminCategorias')">Categorias</button>
+        <button class="nav-link" onclick="mostrarView('adminClientes')">Clientes</button>
+        <button class="nav-link" onclick="mostrarView('adminPedidos')">Pedidos</button>
+        <button class="nav-link" onclick="mostrarView('adminUsuarios')">Usuários</button>
+      `;
+    } else if (estado.papel === "cliente") {
+      links = `
+        <button class="nav-link" onclick="mostrarView('loja')">Loja</button>
+        <button class="nav-link" onclick="mostrarView('meusPedidos')">Meus Pedidos</button>
+        <button class="nav-link" onclick="mostrarView('perfil')">Meu Perfil</button>
+      `;
+    }
+
+    nav.innerHTML = `
+      <div class="nav-brand">🛒 Loja</div>
+      <div class="nav-links">${links}</div>
+      <button class="btn btn-ghost" onclick="logout()">Sair</button>
+    `;
+  }
+
+  function logout() {
+    estado.token = null;
+    estado.papel = null;
+    estado.clienteEu = null;
+    estado.carrinho = [];
+    montarNavbar();
+    mostrarView("login");
+  }
+
+  function mostrarView(nome) {
+    const fn = views[nome];
+    if (!fn) { appContent.innerHTML = "<p>Página não encontrada.</p>"; return; }
+    appContent.innerHTML = '<p class="loading-state">Carregando...</p>';
+    Promise.resolve(fn()).catch((erro) => {
+      appContent.innerHTML = `<div class="empty-state">${escapeHtml(erro.message || String(erro))}</div>`;
+    });
+    montarNavbar();
+  }
+
+  // ==================== VIEW: LOGIN / CADASTRO ====================
+  function renderLogin() {
+    appContent.innerHTML = `
+      <div class="auth-wrap">
+        <h1 style="text-align:center;">🛒 Minha Loja</h1>
+        <div class="card auth-card">
+          <div class="tabs">
+            <button id="tab-login" class="tab-btn active" onclick="mostrarAbaAuth('login')">Entrar</button>
+            <button id="tab-cadastro" class="tab-btn" onclick="mostrarAbaAuth('cadastro')">Criar conta</button>
+          </div>
+
+          <form id="form-login" onsubmit="return onSubmitLogin(event)">
+            <label>Usuário</label>
+            <input id="login-username" required autocomplete="username">
+            <label>Senha</label>
+            <input id="login-password" type="password" required autocomplete="current-password">
+            <button class="btn btn-primary" type="submit" style="width:100%;margin-top:16px;">Entrar</button>
+          </form>
+
+          <form id="form-cadastro" class="hidden" onsubmit="return onSubmitCadastro(event)">
+            <label>Usuário</label>
+            <input id="cad-username" required minlength="3">
+            <label>Senha (mín. 6 caracteres)</label>
+            <input id="cad-password" type="password" required minlength="6">
+            <label>Nome completo</label>
+            <input id="cad-nome" required minlength="2">
+            <label>Email</label>
+            <input id="cad-email" type="email" required>
+            <label>Telefone</label>
+            <input id="cad-telefone" required placeholder="(11) 99999-9999">
+            <label>CPF (11 dígitos, só números)</label>
+            <input id="cad-cpf" required minlength="11" maxlength="11">
+            <label>Endereço (precisa conter "Brasil")</label>
+            <input id="cad-endereco" required placeholder="Rua, número - Cidade, Brasil">
+            <button class="btn btn-primary" type="submit" style="width:100%;margin-top:16px;">Criar conta</button>
+          </form>
+
+          <div id="auth-msg" class="msg hidden"></div>
+        </div>
+        <p class="auth-hint">Contas administrativas são criadas fora do site (script <code>criar_admin.py</code>).</p>
+      </div>
+    `;
+  }
+
+  function mostrarAbaAuth(qual) {
+    document.getElementById("tab-login").classList.toggle("active", qual === "login");
+    document.getElementById("tab-cadastro").classList.toggle("active", qual === "cadastro");
+    document.getElementById("form-login").classList.toggle("hidden", qual !== "login");
+    document.getElementById("form-cadastro").classList.toggle("hidden", qual !== "cadastro");
+    esconderMsgAuth();
+  }
+
+  function mostrarMsgAuth(mensagem, tipo) {
+    const el = document.getElementById("auth-msg");
+    el.textContent = mensagem;
+    el.className = `msg ${tipo === "erro" ? "msg-erro" : "msg-ok"}`;
+  }
+
+  function esconderMsgAuth() {
+    const el = document.getElementById("auth-msg");
+    if (el) el.classList.add("hidden");
+  }
+
+  async function onSubmitLogin(event) {
+    event.preventDefault();
+    const username = document.getElementById("login-username").value.trim();
+    const password = document.getElementById("login-password").value;
+    try {
+      estado.token = await loginRequest(username, password);
+      await detectarPapel();
+      const primeiraView = estado.papel === "admin" ? "adminProdutos" : estado.papel === "cliente" ? "loja" : "semAcesso";
+      mostrarView(primeiraView);
+    } catch (erro) {
+      mostrarMsgAuth(erro.message, "erro");
+    }
+    return false;
+  }
+
+  async function onSubmitCadastro(event) {
+    event.preventDefault();
+    const dados = {
+      username: document.getElementById("cad-username").value.trim(),
+      password: document.getElementById("cad-password").value,
+      nome: document.getElementById("cad-nome").value.trim(),
+      email: document.getElementById("cad-email").value.trim(),
+      telefone_celular: document.getElementById("cad-telefone").value.trim(),
+      cpf: document.getElementById("cad-cpf").value.trim(),
+      endereco: document.getElementById("cad-endereco").value.trim(),
+    };
+    try {
+      await api.criarCliente(dados);
+      mostrarAbaAuth("login");
+      mostrarMsgAuth("Conta criada! Você já pode entrar.", "ok");
+      document.getElementById("login-username").value = dados.username;
+    } catch (erro) {
+      mostrarMsgAuth(erro.message, "erro");
+    }
+    return false;
+  }
+
+  function renderSemAcesso() {
+    appContent.innerHTML = `
+      <div class="container container-sm">
+        <div class="card" style="text-align:center; padding:40px 24px;">
+          <h1>Sem área disponível</h1>
+          <p>Esta conta não tem um perfil de cliente nem permissão de administrador, então não há nada pra mostrar aqui.</p>
+        </div>
+      </div>
+    `;
+  }
+
+  // ==================== VIEW: LOJA (catálogo + carrinho) ====================
+  async function renderLoja() {
+    const [produtos, categorias] = await Promise.all([api.listarProdutos(), api.listarCategorias()]);
+    estado.cacheProdutos = produtos;
+    estado.cacheCategorias = categorias;
+
+    const opcoesCategoria = categorias.map((c) => `<option value="${c.id}">${escapeHtml(c.nome)}</option>`).join("");
+
+    appContent.innerHTML = `
+      <div class="container loja-layout">
+        <div class="loja-principal">
+          <div class="loja-header">
+            <h1>Catálogo</h1>
+            <select id="filtro-categoria" onchange="renderGradeProdutos()">
+              <option value="">Todas as categorias</option>
+              ${opcoesCategoria}
+            </select>
+          </div>
+          <div id="grade-produtos" class="grid-produtos"></div>
+        </div>
+        <aside class="carrinho-painel">
+          <h2>Carrinho</h2>
+          <div id="carrinho-itens"></div>
+          <div class="carrinho-total" id="carrinho-total"></div>
+          <button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="finalizarPedido()">Finalizar pedido</button>
+        </aside>
+      </div>
+    `;
+
+    renderGradeProdutos();
+    renderCarrinho();
+  }
+
+  function renderGradeProdutos() {
+    const filtro = document.getElementById("filtro-categoria").value;
+    const lista = filtro
+      ? estado.cacheProdutos.filter((p) => String(p.categoria.id) === filtro)
+      : estado.cacheProdutos;
+
+    const grade = document.getElementById("grade-produtos");
+    if (lista.length === 0) {
+      grade.innerHTML = '<p class="empty-state">Nenhum produto nessa categoria.</p>';
+      return;
+    }
+
+    grade.innerHTML = lista.map((p) => `
+      <div class="produto-card">
+        <div class="produto-nome">${escapeHtml(p.nome)}</div>
+        <div class="produto-categoria">${escapeHtml(p.categoria.nome)}</div>
+        <div class="produto-descricao">${escapeHtml(p.descricao || "")}</div>
+        <div class="produto-preco">${formatarMoeda(p.preco)}</div>
+        <div class="produto-estoque">${p.estoque > 0 ? `${p.estoque} em estoque` : "Sem estoque"}</div>
+        <div class="produto-acao">
+          <input type="number" min="1" max="${p.estoque}" value="1" id="qtd-${p.id}" ${p.estoque === 0 ? "disabled" : ""}>
+          <button class="btn btn-secondary btn-sm" ${p.estoque === 0 ? "disabled" : ""} onclick="adicionarAoCarrinho(${p.id})">Adicionar</button>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  function adicionarAoCarrinho(produtoId) {
+    const produto = estado.cacheProdutos.find((p) => p.id === produtoId);
+    if (!produto) return;
+    const qtdInput = document.getElementById(`qtd-${produtoId}`);
+    const quantidade = Math.max(1, parseInt(qtdInput.value, 10) || 1);
+
+    const existente = estado.carrinho.find((i) => i.produto_id === produtoId);
+    if (existente) existente.quantidade += quantidade;
+    else estado.carrinho.push({ produto_id: produto.id, nome: produto.nome, preco: produto.preco, quantidade });
+
+    renderCarrinho();
+    toast(`${produto.nome} adicionado ao carrinho.`, "ok");
+  }
+
+  function removerDoCarrinho(produtoId) {
+    estado.carrinho = estado.carrinho.filter((i) => i.produto_id !== produtoId);
+    renderCarrinho();
+  }
+
+  function renderCarrinho() {
+    const container = document.getElementById("carrinho-itens");
+    const totalEl = document.getElementById("carrinho-total");
+    if (!container) return;
+
+    if (estado.carrinho.length === 0) {
+      container.innerHTML = '<p class="empty-state" style="padding:20px 0;">Carrinho vazio.</p>';
+      totalEl.textContent = "";
+      return;
+    }
+
+    container.innerHTML = estado.carrinho.map((i) => `
+      <div class="carrinho-item">
+        <div>
+          <div>${escapeHtml(i.nome)}</div>
+          <div class="item-qtd">${i.quantidade} × ${formatarMoeda(i.preco)}</div>
+        </div>
+        <button class="btn-remover" onclick="removerDoCarrinho(${i.produto_id})" title="Remover">✕</button>
+      </div>
+    `).join("");
+
+    const total = estado.carrinho.reduce((soma, i) => soma + i.preco * i.quantidade, 0);
+    totalEl.innerHTML = `<strong>Total: ${formatarMoeda(total)}</strong>`;
+  }
+
+  async function finalizarPedido() {
+    if (estado.carrinho.length === 0) { toast("Carrinho vazio.", "erro"); return; }
+    try {
+      await api.criarPedido({
+        cliente_id: estado.clienteEu.id,
+        itens: estado.carrinho.map((i) => ({ produto_id: i.produto_id, quantidade: i.quantidade })),
+      });
+      estado.carrinho = [];
+      toast("Pedido criado com sucesso!", "ok");
+      mostrarView("meusPedidos");
+    } catch (erro) {
+      toast(erro.message, "erro");
+    }
+  }
+
+  // ==================== VIEW: MEUS PEDIDOS ====================
+  async function renderMeusPedidos() {
+    const pedidos = await api.meusPedidos();
+    try { estado.cacheProdutos = await api.listarProdutos(); } catch { /* segue sem nome do produto */ }
+
+    appContent.innerHTML = `
+      <div class="container">
+        <h1>Meus Pedidos</h1>
+        <div id="pedidos-lista"></div>
+      </div>
+    `;
+    renderListaPedidos(pedidos, "pedidos-lista", { podeAgir: true });
+  }
+
+  function nomeDoProduto(id) {
+    const p = estado.cacheProdutos.find((x) => x.id === id);
+    return p ? p.nome : `Produto #${id}`;
+  }
+
+  function renderListaPedidos(pedidos, containerId, opcoes = {}) {
+    const container = document.getElementById(containerId);
+    if (pedidos.length === 0) {
+      container.innerHTML = '<p class="empty-state">Nenhum pedido encontrado.</p>';
+      return;
+    }
+    const ordenados = [...pedidos].sort((a, b) => new Date(b.data_pedido) - new Date(a.data_pedido));
+
+    container.innerHTML = ordenados.map((pedido) => `
+      <div class="pedido-card">
+        <div class="pedido-head">
+          <div>
+            <div class="pedido-id">Pedido #${pedido.id}${opcoes.mostrarCliente ? ` — ${escapeHtml(pedido.nomeCliente || ("Cliente #" + pedido.cliente_id))}` : ""}</div>
+            <div class="pedido-data">${formatarData(pedido.data_pedido)}</div>
+          </div>
+          <span class="badge badge-${pedido.status}">${pedido.status}</span>
+        </div>
+        <div class="itens-list">
+          ${pedido.itens.map((item) => `
+            <div class="item-row">
+              <span>${escapeHtml(nomeDoProduto(item.produto_id))} <span class="item-qtd">× ${item.quantidade}</span></span>
+              <span>${formatarMoeda(item.preco_unitario * item.quantidade)}</span>
+            </div>
+          `).join("")}
+        </div>
+        <div class="pedido-total">
+          <span>Total</span>
+          <span>${formatarMoeda(pedido.valor_total)}</span>
+        </div>
+        ${opcoes.podeAgir && pedido.status === "Pendente" ? `
+          <div class="pedido-acoes">
+            <button class="btn btn-primary btn-sm" onclick="pagarPedido(${pedido.id}, ${pedido.valor_total})">Pagar</button>
+            <button class="btn btn-secondary btn-sm" onclick="cancelarPedido(${pedido.id})">Cancelar</button>
+          </div>
+        ` : ""}
+        ${opcoes.podeExcluir ? `
+          <div class="pedido-acoes">
+            <button class="btn btn-danger btn-sm" onclick="excluirPedidoAdmin(${pedido.id})">Excluir</button>
+          </div>
+        ` : ""}
+      </div>
+    `).join("");
+  }
+
+  async function pagarPedido(id, valorSugerido) {
+    const valorStr = prompt("Valor a pagar:", Number(valorSugerido).toFixed(2));
+    if (valorStr === null) return;
+    const valor = parseFloat(valorStr.replace(",", "."));
+    if (isNaN(valor) || valor <= 0) { toast("Valor inválido.", "erro"); return; }
+    try {
+      await api.pagarPedido(id, valor);
+      toast("Pagamento realizado!", "ok");
+      mostrarView("meusPedidos");
+    } catch (erro) {
+      toast(erro.message, "erro");
+    }
+  }
+
+  async function cancelarPedido(id) {
+    if (!confirm(`Cancelar o pedido #${id}?`)) return;
+    try {
+      await api.alterarStatusPedido(id, "Cancelado");
+      toast("Pedido cancelado.", "ok");
+      mostrarView("meusPedidos");
+    } catch (erro) {
+      toast(erro.message, "erro");
+    }
+  }
+
+  // ==================== VIEW: MEU PERFIL ====================
+  async function renderPerfil() {
+    const dados = await api.clienteEu();
+    estado.clienteEu = dados;
+
+    appContent.innerHTML = `
+      <div class="container container-sm">
+        <h1>Meu Perfil</h1>
+        <div class="card">
+          <div class="field-readonly"><strong>Usuário:</strong> ${escapeHtml(dados.username)}</div>
+          <div class="field-readonly"><strong>CPF:</strong> ${escapeHtml(dados.cpf)}</div>
+          <p class="auth-hint" style="margin-top:4px;">Usuário, senha e CPF só podem ser alterados por um administrador.</p>
+
+          <form onsubmit="return onSubmitPerfil(event)">
+            <label>Nome</label>
+            <input id="perfil-nome" value="${escapeHtml(dados.nome)}" required minlength="2">
+            <label>Email</label>
+            <input id="perfil-email" type="email" value="${escapeHtml(dados.email)}" required>
+            <label>Telefone</label>
+            <input id="perfil-telefone" value="${escapeHtml(dados.telefone_celular)}" required>
+            <label>Endereço</label>
+            <input id="perfil-endereco" value="${escapeHtml(dados.endereco)}" required>
+            <button class="btn btn-primary" type="submit" style="margin-top:16px;">Salvar alterações</button>
+          </form>
+        </div>
+      </div>
+    `;
+  }
+
+  async function onSubmitPerfil(event) {
+    event.preventDefault();
+    const dados = {
+      nome: document.getElementById("perfil-nome").value.trim(),
+      email: document.getElementById("perfil-email").value.trim(),
+      telefone_celular: document.getElementById("perfil-telefone").value.trim(),
+      endereco: document.getElementById("perfil-endereco").value.trim(),
+    };
+    try {
+      estado.clienteEu = await api.atualizarClienteEu(dados);
+      toast("Perfil atualizado!", "ok");
+    } catch (erro) {
+      toast(erro.message, "erro");
+    }
+    return false;
+  }
+
+  // ==================== VIEW: ADMIN / PRODUTOS ====================
+  async function renderAdminProdutos() {
+    const [produtos, categorias] = await Promise.all([api.listarProdutos(), api.listarCategorias()]);
+    estado.cacheProdutos = produtos;
+    estado.cacheCategorias = categorias;
+
+    appContent.innerHTML = `
+      <div class="container">
+        <div class="view-header">
+          <h1>Produtos</h1>
+          <button class="btn btn-primary" onclick="abrirFormProduto()">+ Novo produto</button>
+        </div>
+        <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>ID</th><th>Nome</th><th>Categoria</th><th>Preço</th><th>Estoque</th><th></th></tr></thead>
+          <tbody>
+            ${produtos.map((p) => `
+              <tr>
+                <td>${p.id}</td>
+                <td>${escapeHtml(p.nome)}</td>
+                <td>${escapeHtml(p.categoria.nome)}</td>
+                <td>${formatarMoeda(p.preco)}</td>
+                <td>${p.estoque}</td>
+                <td class="col-acoes">
+                  <button class="btn btn-secondary btn-sm" onclick="abrirFormProduto(${p.id})">Editar</button>
+                  <button class="btn btn-danger btn-sm" onclick="excluirProduto(${p.id})">Excluir</button>
+                </td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+        </div>
+        ${produtos.length === 0 ? '<p class="empty-state">Nenhum produto cadastrado.</p>' : ""}
+      </div>
+    `;
+  }
+
+  function abrirFormProduto(id) {
+    if (!id && estado.cacheCategorias.length === 0) {
+      toast("Cadastre uma categoria antes de criar um produto.", "erro");
+      return;
+    }
+    const produto = id ? estado.cacheProdutos.find((p) => p.id === id) : null;
+    const opcoesCategoria = estado.cacheCategorias.map((c) => `
+      <option value="${c.id}" ${produto && produto.categoria.id === c.id ? "selected" : ""}>${escapeHtml(c.nome)}</option>
+    `).join("");
+
+    abrirModal(produto ? "Editar produto" : "Novo produto", `
+      <form onsubmit="return onSubmitProduto(event, ${id || "null"})">
+        <label>Nome</label>
+        <input id="prod-nome" value="${produto ? escapeHtml(produto.nome) : ""}" required minlength="4">
+        <label>Preço</label>
+        <input id="prod-preco" type="number" step="0.01" min="0.01" value="${produto ? produto.preco : ""}" required>
+        <label>Estoque</label>
+        <input id="prod-estoque" type="number" step="1" min="0" value="${produto ? produto.estoque : ""}" required>
+        <label>Categoria</label>
+        <select id="prod-categoria" required>${opcoesCategoria}</select>
+        <label>Descrição (máx. 200 caracteres)</label>
+        <textarea id="prod-descricao" maxlength="200" rows="3">${produto ? escapeHtml(produto.descricao || "") : ""}</textarea>
+        <button class="btn btn-primary" type="submit" style="width:100%;margin-top:16px;">Salvar</button>
+      </form>
+    `);
+  }
+
+  async function onSubmitProduto(event, id) {
+    event.preventDefault();
+    const dados = {
+      nome: document.getElementById("prod-nome").value.trim(),
+      preco: parseFloat(document.getElementById("prod-preco").value),
+      estoque: parseInt(document.getElementById("prod-estoque").value, 10),
+      categoria_id: parseInt(document.getElementById("prod-categoria").value, 10),
+      descricao: document.getElementById("prod-descricao").value.trim(),
+    };
+    try {
+      if (id) await api.atualizarProduto(id, dados);
+      else await api.criarProduto(dados);
+      fecharModal();
+      toast("Produto salvo!", "ok");
+      mostrarView("adminProdutos");
+    } catch (erro) {
+      toast(erro.message, "erro");
+    }
+    return false;
+  }
+
+  async function excluirProduto(id) {
+    if (!confirm("Excluir este produto?")) return;
+    try {
+      await api.removerProduto(id);
+      toast("Produto removido.", "ok");
+      mostrarView("adminProdutos");
+    } catch (erro) {
+      toast(erro.message, "erro");
+    }
+  }
+
+  // ==================== VIEW: ADMIN / CATEGORIAS ====================
+  async function renderAdminCategorias() {
+    const [categorias, produtos] = await Promise.all([api.listarCategorias(), api.listarProdutos()]);
+    estado.cacheCategorias = categorias;
+    estado.cacheProdutos = produtos;
+
+    const contagem = {};
+    produtos.forEach((p) => { contagem[p.categoria.id] = (contagem[p.categoria.id] || 0) + 1; });
+
+    appContent.innerHTML = `
+      <div class="container container-sm">
+        <div class="view-header">
+          <h1>Categorias</h1>
+          <button class="btn btn-primary" onclick="abrirFormCategoria()">+ Nova categoria</button>
+        </div>
+        <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>ID</th><th>Nome</th><th>Produtos</th><th></th></tr></thead>
+          <tbody>
+            ${categorias.map((c) => `
+              <tr>
+                <td>${c.id}</td>
+                <td>${escapeHtml(c.nome)}</td>
+                <td>${contagem[c.id] || 0}</td>
+                <td class="col-acoes">
+                  <button class="btn btn-secondary btn-sm" onclick="abrirFormCategoria(${c.id})">Editar</button>
+                  <button class="btn btn-danger btn-sm" onclick="excluirCategoria(${c.id})">Excluir</button>
+                </td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+        </div>
+        ${categorias.length === 0 ? '<p class="empty-state">Nenhuma categoria cadastrada.</p>' : ""}
+      </div>
+    `;
+  }
+
+  function abrirFormCategoria(id) {
+    const categoria = id ? estado.cacheCategorias.find((c) => c.id === id) : null;
+    abrirModal(categoria ? "Editar categoria" : "Nova categoria", `
+      <form onsubmit="return onSubmitCategoria(event, ${id || "null"})">
+        <label>Nome</label>
+        <input id="cat-nome" value="${categoria ? escapeHtml(categoria.nome) : ""}" required minlength="2" maxlength="50">
+        <button class="btn btn-primary" type="submit" style="width:100%;margin-top:16px;">Salvar</button>
+      </form>
+    `);
+  }
+
+  async function onSubmitCategoria(event, id) {
+    event.preventDefault();
+    const dados = { nome: document.getElementById("cat-nome").value.trim() };
+    try {
+      if (id) await api.atualizarCategoria(id, dados);
+      else await api.criarCategoria(dados);
+      fecharModal();
+      toast("Categoria salva!", "ok");
+      mostrarView("adminCategorias");
+    } catch (erro) {
+      toast(erro.message, "erro");
+    }
+    return false;
+  }
+
+  async function excluirCategoria(id) {
+    if (!confirm("Excluir esta categoria?")) return;
+    try {
+      await api.removerCategoria(id);
+      toast("Categoria removida.", "ok");
+      mostrarView("adminCategorias");
+    } catch (erro) {
+      toast(erro.message, "erro");
+    }
+  }
+
+  // ==================== VIEW: ADMIN / CLIENTES ====================
+  async function renderAdminClientes() {
+    const clientes = await api.listarClientesAdmin();
+    estado.cacheClientes = clientes;
+
+    appContent.innerHTML = `
+      <div class="container">
+        <h1>Clientes</h1>
+        <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>ID</th><th>Usuário</th><th>Nome</th><th>Email</th><th>Telefone</th><th>CPF</th><th></th></tr></thead>
+          <tbody>
+            ${clientes.map((c) => `
+              <tr>
+                <td>${c.id}</td>
+                <td>${escapeHtml(c.username)}</td>
+                <td>${escapeHtml(c.nome)}</td>
+                <td>${escapeHtml(c.email)}</td>
+                <td>${escapeHtml(c.telefone_celular)}</td>
+                <td>${escapeHtml(c.cpf)}</td>
+                <td class="col-acoes">
+                  <button class="btn btn-secondary btn-sm" onclick="abrirFormClienteAdmin(${c.id})">Editar</button>
+                  <button class="btn btn-danger btn-sm" onclick="excluirClienteAdmin(${c.id})">Excluir</button>
+                </td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+        </div>
+        ${clientes.length === 0 ? '<p class="empty-state">Nenhum cliente cadastrado.</p>' : ""}
+      </div>
+    `;
+  }
+
+  function abrirFormClienteAdmin(id) {
+    const cliente = estado.cacheClientes.find((c) => c.id === id);
+    if (!cliente) return;
+    abrirModal("Editar cliente", `
+      <form onsubmit="return onSubmitClienteAdmin(event, ${id})">
+        <label>Nome</label>
+        <input id="admcli-nome" value="${escapeHtml(cliente.nome)}" required minlength="2">
+        <label>Email</label>
+        <input id="admcli-email" type="email" value="${escapeHtml(cliente.email)}" required>
+        <label>Telefone</label>
+        <input id="admcli-telefone" value="${escapeHtml(cliente.telefone_celular)}" required>
+        <label>Endereço</label>
+        <input id="admcli-endereco" value="${escapeHtml(cliente.endereco)}" required>
+        <p class="auth-hint">Usuário, senha e CPF não são editáveis por aqui.</p>
+        <button class="btn btn-primary" type="submit" style="width:100%;margin-top:16px;">Salvar</button>
+      </form>
+    `);
+  }
+
+  async function onSubmitClienteAdmin(event, id) {
+    event.preventDefault();
+    const dados = {
+      nome: document.getElementById("admcli-nome").value.trim(),
+      email: document.getElementById("admcli-email").value.trim(),
+      telefone_celular: document.getElementById("admcli-telefone").value.trim(),
+      endereco: document.getElementById("admcli-endereco").value.trim(),
+    };
+    try {
+      await api.atualizarClienteAdmin(id, dados);
+      fecharModal();
+      toast("Cliente atualizado!", "ok");
+      mostrarView("adminClientes");
+    } catch (erro) {
+      toast(erro.message, "erro");
+    }
+    return false;
+  }
+
+  async function excluirClienteAdmin(id) {
+    if (!confirm("Excluir este cliente? Essa ação não pode ser desfeita.")) return;
+    try {
+      await api.removerClienteAdmin(id);
+      toast("Cliente removido.", "ok");
+      mostrarView("adminClientes");
+    } catch (erro) {
+      toast(erro.message, "erro");
+    }
+  }
+
+  // ==================== VIEW: ADMIN / PEDIDOS ====================
+  async function renderAdminPedidos() {
+    const [pedidos, clientes, produtos] = await Promise.all([
+      api.listarPedidosAdmin(),
+      api.listarClientesAdmin(),
+      api.listarProdutos(),
+    ]);
+    estado.cacheClientes = clientes;
+    estado.cacheProdutos = produtos;
+
+    appContent.innerHTML = `
+      <div class="container">
+        <h1>Pedidos</h1>
+        <div id="pedidos-admin-lista"></div>
+      </div>
+    `;
+    const comNomeCliente = pedidos.map((p) => ({ ...p, nomeCliente: nomeDoCliente(p.cliente_id) }));
+    renderListaPedidos(comNomeCliente, "pedidos-admin-lista", { mostrarCliente: true, podeExcluir: true });
+  }
+
+  function nomeDoCliente(id) {
+    const c = estado.cacheClientes.find((x) => x.id === id);
+    return c ? c.nome : `Cliente #${id}`;
+  }
+
+  async function excluirPedidoAdmin(id) {
+    if (!confirm(`Excluir o pedido #${id}?`)) return;
+    try {
+      await api.removerPedido(id);
+      toast("Pedido removido.", "ok");
+      mostrarView("adminPedidos");
+    } catch (erro) {
+      toast(erro.message, "erro");
+    }
+  }
+
+  // ==================== VIEW: ADMIN / USUÁRIOS ====================
+  async function renderAdminUsuarios() {
+    const usuarios = await api.listarUsuariosAdmin();
+    appContent.innerHTML = `
+      <div class="container container-sm">
+        <h1>Usuários</h1>
+        <p class="auth-hint" style="margin-bottom:16px;">Contas Admin/CLT são criadas pelo script <code>criar_admin.py</code>, fora do site.</p>
+        <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>ID</th><th>Usuário</th><th>Nome</th><th>Email</th><th></th></tr></thead>
+          <tbody>
+            ${usuarios.map((u) => `
+              <tr>
+                <td>${u.id}</td>
+                <td>${escapeHtml(u.username)}</td>
+                <td>${escapeHtml(u.nome)}</td>
+                <td>${escapeHtml(u.email)}</td>
+                <td class="col-acoes">
+                  <button class="btn btn-danger btn-sm" onclick="excluirUsuarioAdmin(${u.id})">Excluir</button>
+                </td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+        </div>
+      </div>
+    `;
+  }
+
+  async function excluirUsuarioAdmin(id) {
+    if (!confirm("Excluir este usuário?")) return;
+    try {
+      await api.removerUsuarioAdmin(id);
+      toast("Usuário removido.", "ok");
+      mostrarView("adminUsuarios");
+    } catch (erro) {
+      toast(erro.message, "erro");
+    }
+  }
+
+  // ==================== MAPA DE VIEWS ====================
+  const views = {
+    login: renderLogin,
+    semAcesso: renderSemAcesso,
+    loja: renderLoja,
+    meusPedidos: renderMeusPedidos,
+    perfil: renderPerfil,
+    adminProdutos: renderAdminProdutos,
+    adminCategorias: renderAdminCategorias,
+    adminClientes: renderAdminClientes,
+    adminPedidos: renderAdminPedidos,
+    adminUsuarios: renderAdminUsuarios,
+  };
+
+  // ==================== INÍCIO ====================
+  mostrarView("login");
+</script>
+</body>
+</html>
