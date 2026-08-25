@@ -2,9 +2,9 @@
 
 API REST para um sistema de e-commerce, desenvolvida em Python com **FastAPI** como projeto final de conclusão do curso técnico de desenvolvimento de sistemas no SENAI.
 
-> ✅ **Autenticação e permissões implementadas.** Todas as rotas exigem um token JWT válido (obtido em `/usuarios/token`), com exceção do registro de usuário/cliente e do próprio login. Rotas administrativas (produtos, categorias, gestão de clientes e listagens gerais) exigem que o usuário logado tenha o papel `Admin` — veja a coluna **Acesso** nas tabelas de endpoints abaixo.
+> ✅ **Autenticação e permissões implementadas.** Todas as rotas exigem um token JWT válido (obtido em `/usuarios/token`), com exceção do registro de usuário/cliente e do próprio login. Rotas administrativas exigem que o usuário logado tenha o papel `Admin`; um cliente autenticado também consegue ver os próprios dados (`/clientes/eu`) e os próprios pedidos (`/pedidos/meus_pedidos`) — veja a coluna **Acesso** nas tabelas de endpoints abaixo.
 >
-> **Limitações conhecidas:** o fluxo de pagamento (`Cliente.realizar_pagamento`) já está implementado na camada de modelo, mas ainda não está exposto por nenhuma rota. O script `criar_tabelas.py` está vazio (hoje as tabelas são criadas automaticamente pelo `main.py` ao subir a aplicação).
+> **Limitação conhecida:** o cliente já consegue ver e editar (`nome`, `email`, `telefone_celular`, `endereco`) os próprios dados, mas trocar `username`, `password` ou `cpf` ainda exige um Admin — não há rota de autoatendimento pra isso.
 
 ## 📋 Sobre o projeto
 
@@ -37,7 +37,7 @@ A aplicação expõe endpoints para gerenciar produtos, categorias, clientes e p
 ├── schemas/              # Schemas Pydantic (validação de entrada/saída)
 ├── services/              # Regras de negócio da aplicação
 ├── consultar.py            # Script auxiliar para consultas no banco
-├── criar_tabelas.py        # Script para criação das tabelas do banco
+├── criar_admin.py          # Script para criar o primeiro usuário Admin (obrigatório)
 ├── database.py              # Configuração da conexão com o banco de dados (SessionDep, engine, Base)
 ├── dependencias.py           # Dependências reutilizáveis (ex: paginação)
 ├── inserir.py                  # Script auxiliar para inserção de dados de teste
@@ -80,9 +80,9 @@ A aplicação expõe endpoints para gerenciar produtos, categorias, clientes e p
    SECRET_KEY=uma_chave_secreta_qualquer
    ```
 
-5. Crie as tabelas do banco (ou deixe a aplicação criar automaticamente ao subir):
+5. Crie o banco e o primeiro usuário Admin (obrigatório — sem ele não há como acessar nenhuma rota administrativa):
    ```bash
-   py criar_tabelas.py
+   py criar_admin.py
    ```
 
 6. (Opcional) Popule o banco com dados de teste:
@@ -146,6 +146,8 @@ A API é organizada em routers, cada um responsável por um recurso. Todos retor
 | Método | Rota                                              | Descrição                                                          | Acesso |
 |--------|----------------------------------------------------|--------------------------------------------------------------------------|--------|
 | GET    | `/clientes/listar_clientes`                        | Lista clientes (com seus pedidos)                                      | Admin |
+| GET    | `/clientes/eu`                                     | Retorna os dados do cliente autenticado, incluindo seus pedidos        | Autenticado |
+| PATCH  | `/clientes/eu`                                     | Atualiza parcialmente os próprios dados (`nome`, `email`, `telefone_celular`, `endereco`) | Autenticado |
 | GET    | `/clientes/{cliente_id}`                           | Busca um cliente específico, incluindo seus pedidos                    | Admin |
 | POST   | `/clientes/criar_cliente`                          | Cria um novo cliente                                                    | Público |
 | PUT    | `/clientes/{cliente_id}`                           | Atualiza um cliente (substituição completa)                            | Admin |
@@ -163,10 +165,12 @@ A API é organizada em routers, cada um responsável por um recurso. Todos retor
 | Método | Rota                       | Descrição                                                                                    | Acesso |
 |--------|-----------------------------|------------------------------------------------------------------------------------------------------|--------|
 | GET    | `/pedidos/listar_pedidos`  | Lista pedidos (com cliente e itens), com paginação                                               | Admin |
-| GET    | `/pedidos/{pedido_id}`     | Busca um pedido específico                                                                       | Autenticado |
+| GET    | `/pedidos/meus_pedidos`    | Lista os pedidos do cliente autenticado                                                          | Autenticado |
+| GET    | `/pedidos/{pedido_id}`     | Busca um pedido específico                                                                       | Autenticado (dono do pedido, ou Admin) |
 | POST   | `/pedidos/criar_pedido`    | Cria um novo pedido para um cliente (`cliente_id` + lista de `itens`: `produto_id` e `quantidade`)| Autenticado |
 | PUT    | `/pedidos/{pedido_id}`     | Atualiza um pedido (substitui cliente e reconstrói a lista de itens)                             | Autenticado |
 | PATCH  | `/pedidos/{pedido_id}`     | Atualiza parcialmente um pedido; se `status` for `"Cancelado"`, aciona a lógica de cancelamento   | Autenticado |
+| POST   | `/pedidos/{pedido_id}/pagar` | Paga um pedido pendente (`valor_pago`); debita estoque e marca como `Pago`, ou cancela o pedido se faltar estoque | Autenticado (dono do pedido) |
 | DELETE | `/pedidos/{pedido_id}`     | Remove um pedido                                                                                  | Admin |
 
 **Corpo de criação/atualização** (`PedidoEntrada`): `cliente_id`, `itens` (lista de `{ produto_id, quantidade }`, com `quantidade > 0`). Itens repetidos com o mesmo `produto_id` são somados antes da validação de estoque.
@@ -195,7 +199,7 @@ A partir da classe base deriva um tipo de usuário com tabela própria (*joined 
 
 **Regras de negócio do Cliente:**
 - `validar_cadastro()` exige um e-mail válido (diferente do padrão `sem@email.com`) e um endereço que contenha "Brasil" (a entrega é feita apenas para o Brasil).
-- `realizar_pagamento(pedido, valor_pago)` valida que o pedido pertence ao cliente, que está com status `Pendente`, que possui itens, que o valor pago cobre o total e que há estoque disponível para todos os itens — do contrário, cancela o pedido automaticamente por falta de estoque.
+- `realizar_pagamento(pedido, valor_pago)` valida que o pedido pertence ao cliente, que está com status `Pendente`, que possui itens, que o valor pago cobre o total e que há estoque disponível para todos os itens — do contrário, cancela o pedido automaticamente por falta de estoque. Exposto pela rota `POST /pedidos/{pedido_id}/pagar`.
 
 ### Categoria e Produto
 

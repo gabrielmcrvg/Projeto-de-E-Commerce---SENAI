@@ -73,6 +73,19 @@ def atualizar_cliente(session: SessionDep, cliente_id: int, dados: ClienteEntrad
 
 # =-= PATCH =-=
 
+@router.patch('/eu', response_model=ClienteResposta)
+def alterar_meus_dados(session: SessionDep, dados: ClientePatch, usuario: UsuarioAtual):
+    cliente = session.get(Cliente, usuario.id)
+    if cliente is None:
+        raise HTTPException(status_code=403, detail="Apenas clientes possuem perfil de cliente.")
+    mudancas = dados.model_dump(exclude_unset=True)
+    for campo, valor in mudancas.items():
+        setattr(cliente, campo, valor)
+    cliente.validar_cadastro()
+    session.commit()
+    session.refresh(cliente)
+    return cliente
+
 @router.patch('/{cliente_id}', response_model=ClienteResposta)
 def alterar_cliente(session: SessionDep, cliente_id: int, dados: ClientePatch, usuario: AdminAtual):
     cliente = obter_ou_404(session, Cliente, cliente_id, "Cliente", options=[selectinload(Cliente.pedidos)])
