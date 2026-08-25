@@ -198,7 +198,7 @@ A partir da classe base deriva um tipo de usuário com tabela própria (*joined 
 - **Cliente** — o único tipo exposto via API própria (`/clientes`), com campos adicionais: `cpf` (único), `telefone_celular`, `endereco`, e relação com seus `pedidos`.
 
 **Regras de negócio do Cliente:**
-- `validar_cadastro()` exige um e-mail válido (diferente do padrão `sem@email.com`) e um endereço que contenha "Brasil" (a entrega é feita apenas para o Brasil).
+- `validar_cadastro()` exige um e-mail válido (diferente do padrão `sem@email.com`).
 - `realizar_pagamento(pedido, valor_pago)` valida que o pedido pertence ao cliente, que está com status `Pendente`, que possui itens, que o valor pago cobre o total e que há estoque disponível para todos os itens — do contrário, cancela o pedido automaticamente por falta de estoque. Exposto pela rota `POST /pedidos/{pedido_id}/pagar`.
 
 ### Categoria e Produto

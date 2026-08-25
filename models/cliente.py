@@ -2,7 +2,7 @@
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from exceptions.erros import ClienteInvalidoError, EnderecoInvalidoError, EstoqueInsuficienteError, PagamentoInvalidoError
+from exceptions.erros import ClienteInvalidoError, EstoqueInsuficienteError, PagamentoInvalidoError
 
 from models.usuario import Usuario
 
@@ -19,9 +19,6 @@ class Cliente(Usuario):
     def validar_cadastro(self):
         if not self.email or self.email == 'sem@email.com':
             raise ClienteInvalidoError('Clientes são obrigados a cadastrar um email válido.')
-
-        if "brasil" not in self.endereco.lower():
-            raise EnderecoInvalidoError('A entrega é realizada apenas para endereços no Brasil.')
 
     def __lt__(self, outro_cliente):
         return self.nome < outro_cliente.nome
