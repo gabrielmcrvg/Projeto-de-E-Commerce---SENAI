@@ -5,6 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from database import SessionDep
 from exceptions.erros import CPFDuplicadoError
 from models.cliente import Cliente
+from models.usuario import Usuario
 from schemas.cliente import ClienteComPedido, ClienteEntrada, ClientePatch, ClienteResposta
 from seguranca import AdminAtual, UsuarioAtual, gerar_hash
 from utils.utils import obter_ou_404
@@ -33,6 +34,11 @@ def buscar_cliente(session: SessionDep, cliente_id: int, usuario: AdminAtual):
 
 @router.post('/criar_cliente', status_code=201, response_model=ClienteResposta)
 def criar_cliente(session: SessionDep, dados: ClienteEntrada):
+    if session.query(Usuario).filter(Usuario.username == dados.username).first():
+        raise CPFDuplicadoError(f"O username '{dados.username}' já está em uso.")
+    if session.query(Cliente).filter(Cliente.cpf == dados.cpf).first():
+        raise CPFDuplicadoError(f"O CPF {dados.cpf} já está cadastrado.")
+
     novo_cliente = Cliente(
         username=dados.username,
         hashed_password=gerar_hash(dados.password),
