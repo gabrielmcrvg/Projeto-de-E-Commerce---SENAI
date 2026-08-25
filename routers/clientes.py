@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError
 
@@ -6,7 +6,7 @@ from database import SessionDep
 from exceptions.erros import CPFDuplicadoError
 from models.cliente import Cliente
 from schemas.cliente import ClienteComPedido, ClienteEntrada, ClientePatch, ClienteResposta
-from seguranca import AdminAtual, gerar_hash
+from seguranca import AdminAtual, UsuarioAtual, gerar_hash
 from utils.utils import obter_ou_404
 
 router = APIRouter(prefix='/clientes', tags=['Clientes'])
@@ -16,6 +16,13 @@ router = APIRouter(prefix='/clientes', tags=['Clientes'])
 @router.get('/listar_clientes', response_model=list[ClienteResposta])
 def listar_clientes(session: SessionDep, usuario: AdminAtual):
     return session.query(Cliente).options(selectinload(Cliente.pedidos)).all()
+
+@router.get('/eu', response_model=ClienteComPedido)
+def eu(session: SessionDep, usuario: UsuarioAtual):
+    cliente = session.get(Cliente, usuario.id, options=[selectinload(Cliente.pedidos)])
+    if cliente is None:
+        raise HTTPException(status_code=403, detail="Apenas clientes possuem perfil de cliente.")
+    return cliente
 
 @router.get('/{cliente_id}', response_model=ClienteComPedido)
 def buscar_cliente(session: SessionDep, cliente_id: int, usuario: AdminAtual):

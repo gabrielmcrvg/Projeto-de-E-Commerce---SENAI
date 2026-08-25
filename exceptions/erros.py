@@ -14,14 +14,6 @@ class ProdutoIndisponivelError(LojaError):
     pass
 
 
-class ProdutoNaoEncontradoError(LojaError):
-    pass
-
-
-class ItemNaoEncontradoError(LojaError):
-    pass
-
-
 class PedidoInvalidoError(LojaError):
     pass
 
@@ -30,19 +22,11 @@ class PagamentoInvalidoError(LojaError):
     pass
 
 
-class PedidoNaoEncontradoError(LojaError):
-    pass
-
-
 class ClienteInvalidoError(ValorInvalidoError):
     pass
 
 
 class CPFDuplicadoError(ValorInvalidoError):
-    pass
-
-
-class EmailDuplicadoError(ValorInvalidoError):
     pass
 
 

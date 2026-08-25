@@ -11,7 +11,3 @@ class Usuario(MappedAsDataclass, Base, kw_only=True):
     nome: Mapped[str]
     email: Mapped[str] = mapped_column(default='sem@email.com')
     papel: Mapped[str] = mapped_column(default="Comum")
-
-    def autenticar(self, sua_senha: str) -> bool:
-        from seguranca import verificar_senha
-        return verificar_senha(sua_senha, self.hashed_password)

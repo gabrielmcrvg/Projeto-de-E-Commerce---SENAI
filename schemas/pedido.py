@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -26,9 +27,8 @@ class PedidoResposta(BaseModel):
     data_pedido: datetime
     status: str
 
-class ItemPedidoPatch(BaseModel):
-    produto_id: int | None = Field(default=None)
-    quantidade: int | None = Field(default=None, gt=0)
-
 class PedidoPatch(BaseModel):
     status: str | None = Field(default=None)
+
+class PagamentoEntrada(BaseModel):
+    valor_pago: Decimal = Field(gt=0)

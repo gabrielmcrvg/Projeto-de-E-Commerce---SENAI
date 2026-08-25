@@ -8,7 +8,7 @@ from dependencias import Paginacao
 from models.cliente import Cliente
 from models.pedido import ItemPedido, Pedido
 from models.produto import Produto
-from schemas.pedido import PedidoEntrada, PedidoPatch, PedidoResposta
+from schemas.pedido import PagamentoEntrada, PedidoEntrada, PedidoPatch, PedidoResposta
 from seguranca import AdminAtual, UsuarioAtual
 from utils.utils import obter_ou_404
 
@@ -40,9 +40,15 @@ def montar_itens_pedido(session: SessionDep, pedido: Pedido, itens):
 def listar_pedidos(session: SessionDep, usuario: AdminAtual, pag: Paginacao = Depends()):
     return session.query(Pedido).options(selectinload(Pedido.cliente), selectinload(Pedido.itens_pedido)).offset(pag.skip).limit(pag.limit).all()
 
+@router.get('/meus_pedidos', response_model=list[PedidoResposta])
+def listar_meus_pedidos(session: SessionDep, usuario: UsuarioAtual, pag: Paginacao = Depends()):
+    return session.query(Pedido).filter(Pedido.cliente_id == usuario.id).options(selectinload(Pedido.cliente), selectinload(Pedido.itens_pedido)).offset(pag.skip).limit(pag.limit).all()
+
 @router.get('/{pedido_id}', response_model=PedidoResposta)
 def buscar_pedido(session: SessionDep, pedido_id: int, usuario: UsuarioAtual):
     pedido = obter_ou_404(session, Pedido, pedido_id, "Pedido", options=[selectinload(Pedido.cliente), selectinload(Pedido.itens_pedido)])
+    if usuario.papel != "Admin" and pedido.cliente_id != usuario.id:
+        raise HTTPException(status_code=403, detail="Você não tem permissão para ver este pedido.")
     return pedido
 
 # =-= POST =-=
@@ -86,6 +92,28 @@ def alterar_pedido(session: SessionDep, pedido_id: int, dados: PedidoPatch, usua
     for campo, valor in mudancas.items():
         setattr(pedido, campo, valor)
     session.commit()
+    session.refresh(pedido)
+    return pedido
+
+
+
+# =-= POST /pagar =-=
+
+@router.post('/{pedido_id}/pagar', response_model=PedidoResposta)
+def pagar_pedido(session: SessionDep, pedido_id: int, dados: PagamentoEntrada, usuario: UsuarioAtual):
+    pedido = obter_ou_404(
+        session, Pedido, pedido_id, "Pedido",
+        options=[selectinload(Pedido.itens_pedido).selectinload(ItemPedido.produto)],
+    )
+    cliente = session.get(Cliente, usuario.id)
+    if cliente is None:
+        raise HTTPException(status_code=403, detail="Apenas clientes podem pagar pedidos.")
+    try:
+        cliente.realizar_pagamento(pedido, dados.valor_pago)
+    finally:
+        # mesmo quando o pagamento falha por falta de estoque, realizar_pagamento ja
+        # marcou o pedido como Cancelado - isso precisa ser persistido tambem
+        session.commit()
     session.refresh(pedido)
     return pedido
 

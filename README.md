@@ -2,7 +2,9 @@
 
 API REST para um sistema de e-commerce, desenvolvida em Python com **FastAPI** como projeto final de conclusão do curso técnico de desenvolvimento de sistemas no SENAI.
 
-> ⚠️ **Projeto em andamento.** A geração de token JWT (`/usuarios/token`) já está implementada, mas nenhuma rota exige autenticação ainda — todos os endpoints estão abertos, sem proteção de acesso. A segurança dos métodos (exigir token, checar permissões por tipo de usuário, etc.) ainda será implementada.
+> ✅ **Autenticação e permissões implementadas.** Todas as rotas exigem um token JWT válido (obtido em `/usuarios/token`), com exceção do registro de usuário/cliente e do próprio login. Rotas administrativas (produtos, categorias, gestão de clientes e listagens gerais) exigem que o usuário logado tenha o papel `Admin` — veja a coluna **Acesso** nas tabelas de endpoints abaixo.
+>
+> **Limitações conhecidas:** o fluxo de pagamento (`Cliente.realizar_pagamento`) já está implementado na camada de modelo, mas ainda não está exposto por nenhuma rota. O script `criar_tabelas.py` está vazio (hoje as tabelas são criadas automaticamente pelo `main.py` ao subir a aplicação).
 
 ## 📋 Sobre o projeto
 
@@ -103,52 +105,52 @@ A API é organizada em routers, cada um responsável por um recurso. Todos retor
 
 ### 🔑 Usuários / Autenticação — `/usuarios`
 
-| Método | Rota                       | Descrição                                                  |
-|--------|-----------------------------|--------------------------------------------------------------|
-| GET    | `/usuarios/listar_usuarios` | Lista todos os usuários cadastrados                          |
-| POST   | `/usuarios/registrar`       | Cria um novo usuário (senha é armazenada com hash)            |
-| POST   | `/usuarios/token`           | Autentica (`username` + `password`, formulário OAuth2) e retorna um token JWT (`access_token`, `token_type`) |
-| DELETE | `/usuarios/{usuario_id}`    | Remove um usuário                                             |
+| Método | Rota                       | Descrição                                                  | Acesso |
+|--------|-----------------------------|----------------------------------------------------------------|--------|
+| GET    | `/usuarios/listar_usuarios` | Lista todos os usuários cadastrados                          | Admin |
+| POST   | `/usuarios/registrar`       | Cria um novo usuário (senha é armazenada com hash)            | Público |
+| POST   | `/usuarios/token`           | Autentica (`username` + `password`, formulário OAuth2) e retorna um token JWT (`access_token`, `token_type`) | Público |
+| DELETE | `/usuarios/{usuario_id}`    | Remove um usuário                                             | Admin |
 
 **Corpo de `/registrar`** (`UsuarioEntrada`): `username` (mín. 3), `password` (mín. 6), `nome` (mín. 3), `email` (formato válido).
 **Resposta** (`UsuarioResposta`): `id`, `username`, `nome`, `email` — a senha nunca é retornada.
 
 ### 🏷️ Categorias — `/categorias`
 
-| Método | Rota                          | Descrição                                                                 |
-|--------|--------------------------------|------------------------------------------------------------------------------|
-| GET    | `/categorias/listar_categorias`| Lista categorias (com seus produtos vinculados), com paginação               |
-| GET    | `/categorias/{categoria_id}`  | Busca uma categoria específica                                              |
-| POST   | `/categorias/criar_categoria` | Cria uma nova categoria                                                     |
-| PUT    | `/categorias/{categoria_id}`  | Atualiza o nome da categoria (substituição completa)                       |
-| PATCH  | `/categorias/{categoria_id}`  | Atualiza parcialmente os dados da categoria                                |
-| DELETE | `/categorias/{categoria_id}`  | Remove uma categoria — bloqueado (`400`) se houver produtos vinculados a ela |
+| Método | Rota                          | Descrição                                                                 | Acesso |
+|--------|--------------------------------|--------------------------------------------------------------------------------|--------|
+| GET    | `/categorias/listar_categorias`| Lista categorias (com seus produtos vinculados), com paginação               | Autenticado |
+| GET    | `/categorias/{categoria_id}`  | Busca uma categoria específica                                              | Autenticado |
+| POST   | `/categorias/criar_categoria` | Cria uma nova categoria                                                     | Admin |
+| PUT    | `/categorias/{categoria_id}`  | Atualiza o nome da categoria (substituição completa)                       | Admin |
+| PATCH  | `/categorias/{categoria_id}`  | Atualiza parcialmente os dados da categoria                                | Admin |
+| DELETE | `/categorias/{categoria_id}`  | Remove uma categoria — bloqueado (`400`) se houver produtos vinculados a ela | Admin |
 
 ### 📦 Produtos — `/produtos`
 
-| Método | Rota                        | Descrição                                             |
-|--------|------------------------------|----------------------------------------------------------|
-| GET    | `/produtos/listar_produtos` | Lista produtos (com dados da categoria), com paginação   |
-| GET    | `/produtos/estoque`         | Lista produtos com foco em `id`, `nome` e `estoque`       |
-| GET    | `/produtos/{produto_id}`    | Busca um produto específico                              |
-| POST   | `/produtos/criar_produto`   | Cria um novo produto (valida se `categoria_id` existe)    |
-| PUT    | `/produtos/{produto_id}`    | Atualiza um produto (substituição completa)               |
-| PATCH  | `/produtos/{produto_id}`    | Atualiza parcialmente um produto                          |
-| DELETE | `/produtos/{produto_id}`    | Remove um produto                                          |
+| Método | Rota                        | Descrição                                             | Acesso |
+|--------|------------------------------|--------------------------------------------------------------|--------|
+| GET    | `/produtos/listar_produtos` | Lista produtos (com dados da categoria), com paginação   | Autenticado |
+| GET    | `/produtos/estoque`         | Lista produtos com foco em `id`, `nome` e `estoque`       | Admin |
+| GET    | `/produtos/{produto_id}`    | Busca um produto específico                              | Autenticado |
+| POST   | `/produtos/criar_produto`   | Cria um novo produto (valida se `categoria_id` existe)    | Admin |
+| PUT    | `/produtos/{produto_id}`    | Atualiza um produto (substituição completa)               | Admin |
+| PATCH  | `/produtos/{produto_id}`    | Atualiza parcialmente um produto                          | Admin |
+| DELETE | `/produtos/{produto_id}`    | Remove um produto                                          | Admin |
 
 **Corpo de criação/atualização** (`ProdutoEntrada`): `nome` (mín. 4), `preco` (> 0), `estoque` (≥ 0), `descricao` (máx. 200 caracteres), `categoria_id`.
 **Resposta** (`ProdutoResposta`): `id`, `nome`, `preco`, `estoque`, `descricao`, `categoria` (objeto com `id` e `nome`).
 
 ### 👤 Clientes — `/clientes`
 
-| Método | Rota                                              | Descrição                                                          |
-|--------|----------------------------------------------------|------------------------------------------------------------------------|
-| GET    | `/clientes/listar_clientes`                        | Lista clientes (com seus pedidos)                                      |
-| GET    | `/clientes/{cliente_id}`                           | Busca um cliente específico, incluindo seus pedidos                    |
-| POST   | `/clientes/criar_cliente`                          | Cria um novo cliente                                                    |
-| PUT    | `/clientes/{cliente_id}`                           | Atualiza um cliente (substituição completa)                            |
-| PATCH  | `/clientes/{cliente_id}`                           | Atualiza parcialmente os dados do cliente                              |
-| DELETE | `/clientes/{cliente_id}`                           | Remove um cliente                                                       |
+| Método | Rota                                              | Descrição                                                          | Acesso |
+|--------|----------------------------------------------------|--------------------------------------------------------------------------|--------|
+| GET    | `/clientes/listar_clientes`                        | Lista clientes (com seus pedidos)                                      | Admin |
+| GET    | `/clientes/{cliente_id}`                           | Busca um cliente específico, incluindo seus pedidos                    | Admin |
+| POST   | `/clientes/criar_cliente`                          | Cria um novo cliente                                                    | Público |
+| PUT    | `/clientes/{cliente_id}`                           | Atualiza um cliente (substituição completa)                            | Admin |
+| PATCH  | `/clientes/{cliente_id}`                           | Atualiza parcialmente os dados do cliente                              | Admin |
+| DELETE | `/clientes/{cliente_id}`                           | Remove um cliente                                                       | Admin |
 
 **Corpo de criação/atualização** (`ClienteEntrada`): `username` (mín. 3), `password` (mín. 6), `nome` (mín. 2), `email`, `telefone_celular`, `cpf` (exatamente 11 caracteres), `endereco`.
 **Resposta** (`ClienteResposta`): `id`, `username`, `nome`, `email`, `telefone_celular`, `cpf`, `endereco`. Ao buscar um cliente específico, a resposta (`ClienteComPedido`) inclui também a lista de `pedidos`.
@@ -158,14 +160,14 @@ A API é organizada em routers, cada um responsável por um recurso. Todos retor
 
 ### 🧾 Pedidos — `/pedidos`
 
-| Método | Rota                       | Descrição                                                                                    |
-|--------|-----------------------------|--------------------------------------------------------------------------------------------------|
-| GET    | `/pedidos/listar_pedidos`  | Lista pedidos (com cliente e itens), com paginação                                               |
-| GET    | `/pedidos/{pedido_id}`     | Busca um pedido específico                                                                       |
-| POST   | `/pedidos/criar_pedido`    | Cria um novo pedido para um cliente (`cliente_id` + lista de `itens`: `produto_id` e `quantidade`)|
-| PUT    | `/pedidos/{pedido_id}`     | Atualiza um pedido (substitui cliente e reconstrói a lista de itens)                             |
-| PATCH  | `/pedidos/{pedido_id}`     | Atualiza parcialmente um pedido; se `status` for `"Cancelado"`, aciona a lógica de cancelamento   |
-| DELETE | `/pedidos/{pedido_id}`     | Remove um pedido                                                                                  |
+| Método | Rota                       | Descrição                                                                                    | Acesso |
+|--------|-----------------------------|------------------------------------------------------------------------------------------------------|--------|
+| GET    | `/pedidos/listar_pedidos`  | Lista pedidos (com cliente e itens), com paginação                                               | Admin |
+| GET    | `/pedidos/{pedido_id}`     | Busca um pedido específico                                                                       | Autenticado |
+| POST   | `/pedidos/criar_pedido`    | Cria um novo pedido para um cliente (`cliente_id` + lista de `itens`: `produto_id` e `quantidade`)| Autenticado |
+| PUT    | `/pedidos/{pedido_id}`     | Atualiza um pedido (substitui cliente e reconstrói a lista de itens)                             | Autenticado |
+| PATCH  | `/pedidos/{pedido_id}`     | Atualiza parcialmente um pedido; se `status` for `"Cancelado"`, aciona a lógica de cancelamento   | Autenticado |
+| DELETE | `/pedidos/{pedido_id}`     | Remove um pedido                                                                                  | Admin |
 
 **Corpo de criação/atualização** (`PedidoEntrada`): `cliente_id`, `itens` (lista de `{ produto_id, quantidade }`, com `quantidade > 0`). Itens repetidos com o mesmo `produto_id` são somados antes da validação de estoque.
 **Resposta** (`PedidoResposta`): `id`, `cliente_id`, `itens` (lista de `{ id, produto_id, quantidade }`), `data_pedido`, `status`.
@@ -173,9 +175,9 @@ A API é organizada em routers, cada um responsável por um recurso. Todos retor
 
 ### ⚙️ Status — `/status`
 
-| Método | Rota      | Descrição                        |
-|--------|-----------|-----------------------------------|
-| GET    | `/status` | Retorna o status e versão da API |
+| Método | Rota      | Descrição                        | Acesso |
+|--------|-----------|-----------------------------------|--------|
+| GET    | `/status` | Retorna o status e versão da API | Público |
 
 > Consulte `/docs` (Swagger) após executar a aplicação para ver os schemas completos de cada requisição/resposta.
 
@@ -215,7 +217,7 @@ A partir da classe base deriva um tipo de usuário com tabela própria (*joined 
 Toda a árvore de exceções de domínio herda de `LojaError`, capturada por um handler genérico que responde `400` com a mensagem do erro. Além dela, `RecursoNaoEncontrado` tem handler próprio, retornando `404`. Entre as exceções de domínio:
 
 - `ClienteInvalidoError` / `EnderecoInvalidoError` — dados de cadastro do cliente inválidos
-- `CPFDuplicadoError` / `EmailDuplicadoError` — CPF ou e-mail já cadastrados em outro usuário
+- `CPFDuplicadoError` — CPF ou username já cadastrados em outro usuário
 - `PagamentoInvalidoError` — pedido não pertence ao cliente, já foi pago/cancelado, ou valor pago é insuficiente
 - `EstoqueInsuficienteError` — estoque insuficiente para concluir a operação
 - `ProdutoIndisponivelError` — produto descontinuado ou indisponível para venda
