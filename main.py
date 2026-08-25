@@ -1,6 +1,9 @@
+from pathlib import Path
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from database import Base, engine
 from routers import auth, categorias, clientes, produtos, pedidos
 from exceptions.excecoes import RecursoNaoEncontrado
@@ -19,6 +22,9 @@ app.add_middleware(
     allow_headers=['*'],
 )
 
+Path("uploads").mkdir(exist_ok=True)
+app.mount('/uploads', StaticFiles(directory='uploads'), name='uploads')
+
 app.include_router(produtos.router)
 app.include_router(pedidos.router)
 app.include_router(clientes.router)
@@ -36,6 +42,10 @@ def loja_error_handler(request: Request, exc: LojaError):
 @app.get('/')
 def raiz():
     return {'Mensagem': 'API do TFU'}
+
+@app.get('/app')
+def frontend():
+    return FileResponse('frontend/app.html')
 
 @app.get('/status')
 def status():

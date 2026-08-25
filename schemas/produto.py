@@ -24,6 +24,7 @@ class ProdutoResposta(BaseModel):
     preco: float
     estoque: int
     descricao: str
+    foto: str | None = None
     categoria: CategoriaResposta
 
 class ProdutoPatch(BaseModel):

@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Depends, status
+import shutil
+from pathlib import Path
+
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
 from sqlalchemy.orm import selectinload
 
 from database import SessionDep
@@ -10,6 +13,12 @@ from seguranca import AdminAtual, UsuarioAtual
 from utils.utils import obter_ou_404
 
 router = APIRouter(prefix='/produtos', tags=['Produtos'])
+
+PASTA_UPLOAD = Path("uploads")
+PASTA_UPLOAD.mkdir(exist_ok=True)
+
+TIPOS_PERMITIDOS = {"image/jpeg", "image/png", "image/webp"}
+TAMANHO_MAXIMO = 5 * 1024 * 1024  # 5 MB
 
 def validar_categoria(categoria_id: int, session):
     obter_ou_404(session, Categoria, categoria_id, "Categoria")
@@ -62,6 +71,30 @@ def alterar_produto(session: SessionDep, produto_id: int, dados: ProdutoPatch, u
         validar_categoria(mudancas['categoria_id'], session)
     for campo, valor in mudancas.items():
         setattr(produto, campo, valor)
+    session.commit()
+    session.refresh(produto)
+    return produto
+
+# =-= FOTO =-=
+
+@router.post('/{produto_id}/foto', response_model=ProdutoResposta)
+def upload_foto_produto(session: SessionDep, produto_id: int, arquivo: UploadFile, usuario: AdminAtual):
+    produto = obter_ou_404(session, Produto, produto_id, "Produto")
+
+    if arquivo.content_type not in TIPOS_PERMITIDOS:
+        raise HTTPException(status_code=400, detail="Tipo não permitido. Envie JPEG, PNG ou WEBP.")
+    if arquivo.size is not None and arquivo.size > TAMANHO_MAXIMO:
+        raise HTTPException(status_code=413, detail="Arquivo muito grande (máx. 5 MB).")
+    if not arquivo.filename:
+        raise HTTPException(status_code=400, detail="Arquivo sem nome.")
+
+    nome_seguro = Path(arquivo.filename).name
+    nome_arquivo = f"produto_{produto_id}_{nome_seguro}"
+    destino = PASTA_UPLOAD / nome_arquivo
+    with open(destino, "wb") as buffer:
+        shutil.copyfileobj(arquivo.file, buffer)
+
+    produto.foto = str(destino)
     session.commit()
     session.refresh(produto)
     return produto

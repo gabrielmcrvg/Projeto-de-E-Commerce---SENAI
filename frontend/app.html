@@ -130,6 +130,10 @@
   .loja-header select { width: auto; min-width: 200px; }
   .grid-produtos { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
   .produto-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 4px; }
+  .produto-foto { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 8px; background: var(--bg); margin-bottom: 4px; }
+  .produto-foto-vazia { display: flex; align-items: center; justify-content: center; font-size: 2rem; color: var(--muted); }
+  .thumb-produto { width: 40px; height: 40px; object-fit: cover; border-radius: 6px; }
+  .thumb-produto-vazia { width: 40px; height: 40px; border-radius: 6px; background: var(--bg); display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 0.85rem; }
   .produto-nome { font-weight: 600; }
   .produto-categoria { font-size: 0.75rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.03em; }
   .produto-descricao { font-size: 0.82rem; color: var(--muted); flex: 1; margin: 4px 0; }
@@ -189,7 +193,7 @@
 
 <script>
   // ==================== CONFIG ====================
-  const API_BASE_URL = "http://localhost:8000";
+  const API_BASE_URL = "http://179.199.131.150:8000";
 
   // ==================== ESTADO (em memória - some ao recarregar a página) ====================
   const estado = {
@@ -312,6 +316,11 @@
     criarProduto: (dados) => apiFetch("/produtos/criar_produto", { method: "POST", body: JSON.stringify(dados) }),
     atualizarProduto: (id, dados) => apiFetch(`/produtos/${id}`, { method: "PATCH", body: JSON.stringify(dados) }),
     removerProduto: (id) => apiFetch(`/produtos/${id}`, { method: "DELETE" }),
+    uploadFotoProduto: (id, arquivo) => {
+      const formData = new FormData();
+      formData.append("arquivo", arquivo);
+      return apiFetch(`/produtos/${id}/foto`, { method: "POST", body: formData });
+    },
 
     meusPedidos: () => apiFetch("/pedidos/meus_pedidos?limit=200"),
     criarPedido: (dados) => apiFetch("/pedidos/criar_pedido", { method: "POST", body: JSON.stringify(dados) }),
@@ -548,6 +557,7 @@
 
     grade.innerHTML = lista.map((p) => `
       <div class="produto-card">
+        ${p.foto ? `<img class="produto-foto" src="${API_BASE_URL}/${p.foto}" alt="${escapeHtml(p.nome)}">` : '<div class="produto-foto produto-foto-vazia">📦</div>'}
         <div class="produto-nome">${escapeHtml(p.nome)}</div>
         <div class="produto-categoria">${escapeHtml(p.categoria.nome)}</div>
         <div class="produto-descricao">${escapeHtml(p.descricao || "")}</div>
@@ -768,10 +778,11 @@
         </div>
         <div class="table-wrap">
         <table class="table">
-          <thead><tr><th>ID</th><th>Nome</th><th>Categoria</th><th>Preço</th><th>Estoque</th><th></th></tr></thead>
+          <thead><tr><th></th><th>ID</th><th>Nome</th><th>Categoria</th><th>Preço</th><th>Estoque</th><th></th></tr></thead>
           <tbody>
             ${produtos.map((p) => `
               <tr>
+                <td>${p.foto ? `<img class="thumb-produto" src="${API_BASE_URL}/${p.foto}" alt="">` : '<div class="thumb-produto thumb-produto-vazia">📦</div>'}</td>
                 <td>${p.id}</td>
                 <td>${escapeHtml(p.nome)}</td>
                 <td>${escapeHtml(p.categoria.nome)}</td>
@@ -813,6 +824,9 @@
         <select id="prod-categoria" required>${opcoesCategoria}</select>
         <label>Descrição (máx. 200 caracteres)</label>
         <textarea id="prod-descricao" maxlength="200" rows="3">${produto ? escapeHtml(produto.descricao || "") : ""}</textarea>
+        <label>Foto (JPEG, PNG ou WEBP, máx. 5 MB)</label>
+        ${produto && produto.foto ? `<img src="${API_BASE_URL}/${produto.foto}" style="max-width:120px;border-radius:8px;display:block;margin-bottom:8px;">` : ""}
+        <input id="prod-foto" type="file" accept="image/jpeg,image/png,image/webp">
         <button class="btn btn-primary" type="submit" style="width:100%;margin-top:16px;">Salvar</button>
       </form>
     `);
@@ -827,9 +841,12 @@
       categoria_id: parseInt(document.getElementById("prod-categoria").value, 10),
       descricao: document.getElementById("prod-descricao").value.trim(),
     };
+    const arquivoFoto = document.getElementById("prod-foto").files[0];
     try {
-      if (id) await api.atualizarProduto(id, dados);
-      else await api.criarProduto(dados);
+      const produtoSalvo = id ? await api.atualizarProduto(id, dados) : await api.criarProduto(dados);
+      if (arquivoFoto) {
+        await api.uploadFotoProduto(produtoSalvo.id, arquivoFoto);
+      }
       fecharModal();
       toast("Produto salvo!", "ok");
       mostrarView("adminProdutos");

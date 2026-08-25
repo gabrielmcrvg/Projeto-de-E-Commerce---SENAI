@@ -12,6 +12,7 @@ class Produto(Base):
     preco: Mapped[float]
     estoque: Mapped[int]
     descricao: Mapped[str] = mapped_column(default="")
+    foto: Mapped[str | None] = mapped_column(default=None)
     categoria_id: Mapped[int] = mapped_column(ForeignKey("categorias.id"))
     categoria: Mapped["Categoria"] = relationship(back_populates="produtos")
 
