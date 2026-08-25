@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from database import SessionDep
+from models.cliente import Cliente
 from models.usuario import Usuario
 from schemas.usuario import Token, UsuarioEntrada, UsuarioResposta
 from seguranca import AdminAtual, criar_token, gerar_hash, verificar_senha
@@ -38,8 +39,15 @@ def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], session: S
 
 @router.delete("/{usuario_id}", status_code=204)
 def deletar_usuario(usuario_id: int, session: SessionDep, usuario_logado: AdminAtual):
-    usuario = obter_ou_404(session, Usuario, usuario_id, "Usuario")
-    session.delete(usuario)
+    # Se o usuario tambem for um cliente, precisa deletar via Cliente para
+    # remover a linha das duas tabelas (usuarios e clientes). Deletando so
+    # como Usuario deixava a linha de clientes orfa.
+    cliente = session.get(Cliente, usuario_id)
+    if cliente is not None:
+        session.delete(cliente)
+    else:
+        usuario = obter_ou_404(session, Usuario, usuario_id, "Usuario")
+        session.delete(usuario)
     session.commit()
 
 
