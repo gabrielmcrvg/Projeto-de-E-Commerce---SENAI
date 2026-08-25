@@ -2,7 +2,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from database import Base, engine
 from routers import auth, categorias, clientes, produtos, pedidos
@@ -41,7 +41,7 @@ def loja_error_handler(request: Request, exc: LojaError):
 
 @app.get('/')
 def raiz():
-    return {'Mensagem': 'API do TFU'}
+    return RedirectResponse(url='/app')
 
 @app.get('/app')
 def frontend():
