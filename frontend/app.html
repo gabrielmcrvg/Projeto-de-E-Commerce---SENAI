@@ -11,34 +11,44 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Loja</title>
+<title>Rancho Pet Shop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #f4f5f7;
-    --card: #ffffff;
-    --text: #1c1f26;
-    --muted: #6b7280;
-    --border: #e5e7eb;
-    --accent: #2563eb;
-    --accent-hover: #1d4ed8;
-    --success-bg: #dcfce7;
-    --success-text: #15803d;
-    --warning-bg: #fef3c7;
-    --warning-text: #92400e;
-    --danger-bg: #fee2e2;
-    --danger-text: #b91c1c;
-    --danger: #dc2626;
+    --bg: #FDFBF7;
+    --bg-alt: #F4ECDD;
+    --card: #FFFFFF;
+    --text: #2C2C2C;
+    --muted: #8A7F6E;
+    --border: #E9DFCC;
+    --accent: #2D5A27;
+    --accent-hover: #234620;
+    --accent-2: #C86D51;
+    --accent-2-hover: #AD5A40;
+    --success-bg: #E4EFDA;
+    --success-text: #2D5A27;
+    --warning-bg: #FBEEDD;
+    --warning-text: #92400E;
+    --danger-bg: #F8E3DC;
+    --danger-text: #A5442B;
+    --danger: #C86D51;
+    --radius: 16px;
+    --shadow: 0 6px 20px rgba(60, 44, 24, 0.08);
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: 'Nunito', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     background: var(--bg);
+    background-image: radial-gradient(circle at top right, rgba(45,90,39,0.05), transparent 45%);
     color: var(--text);
     min-height: 100vh;
   }
-  h1 { font-size: 1.5rem; margin: 0 0 4px; }
-  h2 { font-size: 1.15rem; margin: 0; }
+  h1, h2 { font-family: 'Nunito', sans-serif; font-weight: 800; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  h2 { font-size: 1.2rem; margin: 0; }
   .hidden { display: none !important; }
   .container { max-width: 1080px; margin: 0 auto; padding: 28px 20px 80px; }
   .container-sm { max-width: 640px; }
@@ -49,143 +59,211 @@
     gap: 20px;
     background: var(--card);
     border-bottom: 1px solid var(--border);
-    padding: 12px 24px;
+    padding: 14px 24px;
     position: sticky;
     top: 0;
     z-index: 10;
   }
-  .nav-brand { font-weight: 700; margin-right: auto; }
+  .nav-brand { font-weight: 800; font-size: 1.1rem; margin-right: auto; color: var(--accent); }
   .nav-links { display: flex; gap: 6px; flex-wrap: wrap; }
   .nav-link {
     background: transparent;
     border: none;
-    padding: 8px 12px;
-    border-radius: 8px;
+    padding: 8px 14px;
+    border-radius: 999px;
     font-size: 0.9rem;
+    font-weight: 600;
     cursor: pointer;
     color: var(--text);
   }
-  .nav-link:hover { background: var(--bg); }
+  .nav-link:hover { background: var(--bg-alt); }
 
   button { font-family: inherit; }
   .btn {
     cursor: pointer;
     border: none;
-    border-radius: 8px;
+    border-radius: 999px;
     font-size: 0.9rem;
-    font-weight: 600;
-    padding: 9px 16px;
+    font-weight: 700;
+    padding: 10px 20px;
+    transition: transform .15s ease, background .15s ease;
   }
+  .btn:active { transform: scale(.97); }
   .btn-primary { background: var(--accent); color: #fff; }
   .btn-primary:hover { background: var(--accent-hover); }
-  .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
-  .btn-secondary:hover { background: var(--bg); }
+  .btn-secondary { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+  .btn-secondary:hover { background: var(--bg-alt); border-color: var(--accent); }
   .btn-danger { background: var(--danger-bg); color: var(--danger-text); }
   .btn-danger:hover { background: var(--danger); color: #fff; }
-  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
-  .btn-sm { padding: 6px 10px; font-size: 0.82rem; }
+  .btn-ghost { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+  .btn-sm { padding: 7px 12px; font-size: 0.82rem; }
   button:disabled { opacity: 0.5; cursor: default; }
 
-  label { display: block; font-size: 0.85rem; color: var(--muted); margin: 14px 0 6px; }
+  label { display: block; font-size: 0.85rem; color: var(--muted); margin: 14px 0 6px; font-weight: 600; }
   input, select, textarea {
     width: 100%;
-    padding: 10px 12px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
     font-size: 0.92rem;
     font-family: inherit;
     background: #fff;
     color: var(--text);
   }
-  input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
   textarea { resize: vertical; }
 
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); }
+
+  .rancho-landing {
+    display: grid;
+    gap: 40px;
+    align-items: center;
+    padding-top: 24px;
+  }
+  @media (min-width: 860px) {
+    .rancho-landing { grid-template-columns: 1.1fr 0.9fr; }
+  }
+  .rancho-eyebrow {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--success-bg); color: var(--accent);
+    padding: 6px 14px; border-radius: 999px;
+    font-weight: 700; font-size: 0.82rem; margin-bottom: 14px;
+  }
+  .rancho-hero h1 { font-size: clamp(1.7rem, 1.3rem + 1.6vw, 2.6rem); line-height: 1.15; margin-bottom: 14px; }
+  .rancho-lead { color: var(--muted); font-size: 1.02rem; max-width: 48ch; margin-bottom: 22px; }
+  .rancho-badges { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
+  .rancho-badge {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--card); border: 1px solid var(--border);
+    padding: 8px 14px; border-radius: 999px;
+    font-size: 0.82rem; font-weight: 700; box-shadow: var(--shadow);
+  }
+  .rancho-badge svg { width: 16px; height: 16px; color: var(--accent-2); flex-shrink: 0; }
+  .rancho-quote {
+    background: var(--bg-alt); border-left: 4px solid var(--accent-2);
+    padding: 14px 18px; border-radius: 0 12px 12px 0; margin: 0;
+    font-size: 0.9rem; color: var(--text); font-style: italic;
+    max-width: 46ch;
+  }
 
   .auth-wrap { max-width: 400px; margin: 50px auto 0; padding: 0 20px; }
-  .auth-card { margin-top: 20px; }
+  .auth-card { margin-top: 0; }
   .tabs { display: flex; gap: 4px; margin-bottom: 18px; border-bottom: 1px solid var(--border); }
   .tab-btn {
     flex: 1; background: none; border: none; padding: 10px; cursor: pointer;
-    color: var(--muted); font-weight: 600; border-bottom: 2px solid transparent;
+    color: var(--muted); font-weight: 700; border-bottom: 2px solid transparent;
   }
   .tab-btn.active { color: var(--accent); border-color: var(--accent); }
-  .msg { margin-top: 14px; padding: 10px 12px; border-radius: 8px; font-size: 0.85rem; }
+  .msg { margin-top: 14px; padding: 10px 12px; border-radius: 10px; font-size: 0.85rem; }
   .msg-erro { background: var(--danger-bg); color: var(--danger-text); }
   .msg-ok { background: var(--success-bg); color: var(--success-text); }
   .auth-hint { text-align: center; color: var(--muted); font-size: 0.8rem; margin-top: 16px; }
   .field-readonly { font-size: 0.9rem; margin-bottom: 6px; }
 
+  .rancho-faq { margin-top: 64px; max-width: 760px; }
+  .rancho-faq h2 { margin-bottom: 18px; }
+  .faq-item { border-bottom: 1px solid var(--border); }
+  .faq-item summary {
+    list-style: none; cursor: pointer;
+    padding: 16px 0; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    font-weight: 700; font-size: 0.95rem;
+  }
+  .faq-item summary::-webkit-details-marker { display: none; }
+  .faq-item summary .plus {
+    width: 24px; height: 24px; flex-shrink: 0; border-radius: 50%;
+    background: var(--bg-alt); display: flex; align-items: center; justify-content: center;
+    transition: transform .15s ease, background .15s ease; color: var(--accent);
+  }
+  .faq-item summary .plus svg { width: 14px; height: 14px; }
+  .faq-item[open] summary .plus { background: var(--accent); color: #fff; transform: rotate(45deg); }
+  .faq-item p { padding-bottom: 16px; color: var(--muted); font-size: 0.88rem; max-width: 60ch; }
+
   .view-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 12px; flex-wrap: wrap; }
 
-  .table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
   .table th, .table td { text-align: left; padding: 10px 14px; font-size: 0.88rem; border-bottom: 1px solid var(--border); }
-  .table th { color: var(--muted); font-weight: 600; background: var(--bg); }
+  .table th { color: var(--muted); font-weight: 700; background: var(--bg-alt); }
   .table tr:last-child td { border-bottom: none; }
   .col-acoes { display: flex; gap: 6px; justify-content: flex-end; }
   .table-wrap { overflow-x: auto; }
+
+  .beneficios-strip { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 22px; }
+  .beneficio-item {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--card); border: 1px solid var(--border);
+    padding: 10px 16px; border-radius: 999px;
+    font-size: 0.82rem; font-weight: 700; box-shadow: var(--shadow);
+  }
+  .beneficio-item svg { width: 17px; height: 17px; color: var(--accent-2); flex-shrink: 0; }
 
   .loja-layout { display: grid; grid-template-columns: 1fr 300px; gap: 24px; align-items: start; }
   .loja-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; gap: 12px; flex-wrap: wrap; }
   .loja-header select { width: auto; min-width: 200px; }
   .grid-produtos { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
-  .produto-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 4px; }
-  .produto-foto { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 8px; background: var(--bg); margin-bottom: 4px; cursor: pointer; }
+  .produto-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 4px; box-shadow: var(--shadow); transition: transform .15s ease; }
+  .produto-card:hover { transform: translateY(-3px); }
+  .produto-foto { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 12px; background: var(--bg-alt); margin-bottom: 4px; cursor: pointer; }
   .produto-foto-vazia { display: flex; align-items: center; justify-content: center; font-size: 2rem; color: var(--muted); }
-  .thumb-produto { width: 40px; height: 40px; object-fit: cover; border-radius: 6px; cursor: pointer; }
-  .thumb-produto-vazia { width: 40px; height: 40px; border-radius: 6px; background: var(--bg); display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 0.85rem; }
+  .thumb-produto { width: 40px; height: 40px; object-fit: cover; border-radius: 8px; cursor: pointer; }
+  .thumb-produto-vazia { width: 40px; height: 40px; border-radius: 8px; background: var(--bg-alt); display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 0.85rem; }
   .foto-clicavel { cursor: pointer; }
 
   .lightbox-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+    position: fixed; inset: 0; background: rgba(30,22,12,0.85);
     display: flex; align-items: center; justify-content: center; z-index: 300; padding: 24px;
     cursor: zoom-out;
   }
-  .lightbox-img { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: 8px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
+  .lightbox-img { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
   .lightbox-fechar { position: fixed; top: 18px; right: 24px; background: none; border: none; color: #fff; font-size: 1.8rem; cursor: pointer; z-index: 301; }
-  .produto-nome { font-weight: 600; }
-  .produto-categoria { font-size: 0.75rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.03em; }
+  .produto-nome { font-weight: 700; }
+  .produto-categoria {
+    align-self: flex-start;
+    font-size: 0.72rem; color: var(--accent); background: var(--success-bg);
+    padding: 3px 10px; border-radius: 999px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.03em;
+  }
   .produto-descricao { font-size: 0.82rem; color: var(--muted); flex: 1; margin: 4px 0; }
-  .produto-preco { font-weight: 700; font-size: 1.05rem; }
+  .produto-preco { font-weight: 800; font-size: 1.08rem; color: var(--accent-2); }
   .produto-estoque { font-size: 0.78rem; color: var(--muted); }
   .produto-acao { display: flex; gap: 8px; margin-top: 8px; }
   .produto-acao input { width: 60px; padding: 8px; }
 
-  .carrinho-painel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; position: sticky; top: 80px; }
+  .carrinho-painel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; position: sticky; top: 90px; box-shadow: var(--shadow); }
   .carrinho-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.86rem; gap: 8px; }
   .carrinho-item:last-child { border-bottom: none; }
   .btn-remover { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1rem; }
   .btn-remover:hover { color: var(--danger-text); }
   .carrinho-total { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 1rem; }
 
-  .pedido-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; margin-bottom: 16px; }
+  .pedido-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 16px; box-shadow: var(--shadow); }
   .pedido-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
-  .pedido-id { font-weight: 600; font-size: 1.02rem; }
+  .pedido-id { font-weight: 700; font-size: 1.02rem; }
   .pedido-data { color: var(--muted); font-size: 0.82rem; margin-top: 2px; }
-  .badge { font-size: 0.75rem; font-weight: 600; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+  .badge { font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
   .badge-Pendente { background: var(--warning-bg); color: var(--warning-text); }
   .badge-Pago { background: var(--success-bg); color: var(--success-text); }
   .badge-Cancelado { background: var(--danger-bg); color: var(--danger-text); }
   .itens-list { border-top: 1px solid var(--border); padding-top: 10px; }
   .item-row { display: flex; justify-content: space-between; font-size: 0.88rem; padding: 4px 0; }
   .item-qtd { color: var(--muted); }
-  .pedido-total { display: flex; justify-content: space-between; border-top: 1px solid var(--border); margin-top: 10px; padding-top: 10px; font-weight: 600; }
+  .pedido-total { display: flex; justify-content: space-between; border-top: 1px solid var(--border); margin-top: 10px; padding-top: 10px; font-weight: 700; }
   .pedido-acoes { display: flex; gap: 8px; margin-top: 12px; }
 
   .empty-state, .loading-state { text-align: center; color: var(--muted); padding: 60px 20px; }
 
   .modal-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+    position: fixed; inset: 0; background: rgba(30,22,12,0.5);
     display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px;
   }
-  .modal-box { background: var(--card); border-radius: 12px; padding: 22px; width: 100%; max-width: 420px; max-height: 90vh; overflow-y: auto; }
+  .modal-box { background: var(--card); border-radius: var(--radius); padding: 22px; width: 100%; max-width: 420px; max-height: 90vh; overflow-y: auto; }
   .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
   .btn-fechar { background: none; border: none; font-size: 1.1rem; cursor: pointer; color: var(--muted); }
 
   #toast-container { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 200; }
-  .toast { padding: 12px 16px; border-radius: 8px; font-size: 0.88rem; box-shadow: 0 4px 12px rgba(0,0,0,0.12); opacity: 1; transition: opacity 0.3s; max-width: 320px; }
-  .toast-ok { background: #1c1f26; color: #fff; }
-  .toast-erro { background: var(--danger-text); color: #fff; }
+  .toast { padding: 12px 16px; border-radius: 10px; font-size: 0.88rem; box-shadow: 0 4px 14px rgba(44,32,20,0.18); opacity: 1; transition: opacity 0.3s; max-width: 320px; }
+  .toast-ok { background: var(--accent); color: #fff; }
+  .toast-erro { background: var(--accent-2); color: #fff; }
   .toast-saindo { opacity: 0; }
 
   @media (max-width: 800px) {
@@ -217,6 +295,11 @@
   };
 
   const appContent = document.getElementById("app-content");
+
+  const iconePata = `<svg viewBox="0 0 24 24" fill="currentColor"><ellipse cx="12" cy="16" rx="6" ry="5"/><ellipse cx="5" cy="9" rx="2.3" ry="3"/><ellipse cx="10" cy="5.2" rx="2.1" ry="2.8"/><ellipse cx="14" cy="5.2" rx="2.1" ry="2.8"/><ellipse cx="19" cy="9" rx="2.3" ry="3"/></svg>`;
+  const iconeFolha = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20c8-1 14-7 15-16-9 1-15 7-16 16Z"/><path d="M6 18c3-4 6-7 11-11"/></svg>`;
+  const iconeEnvio = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>`;
+  const iconeMais = `<span class="plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg></span>`;
 
   // ==================== HELPERS ====================
   function escapeHtml(valor) {
@@ -398,7 +481,7 @@
     }
 
     nav.innerHTML = `
-      <div class="nav-brand">🛒 Loja</div>
+      <div class="nav-brand">🐾 Rancho Pet</div>
       <div class="nav-links">${links}</div>
       <button class="btn btn-ghost" onclick="logout()">Sair</button>
     `;
@@ -426,43 +509,78 @@
   // ==================== VIEW: LOGIN / CADASTRO ====================
   function renderLogin() {
     appContent.innerHTML = `
-      <div class="auth-wrap">
-        <h1 style="text-align:center;">🛒 Minha Loja</h1>
-        <div class="card auth-card">
-          <div class="tabs">
-            <button id="tab-login" class="tab-btn active" onclick="mostrarAbaAuth('login')">Entrar</button>
-            <button id="tab-cadastro" class="tab-btn" onclick="mostrarAbaAuth('cadastro')">Criar conta</button>
+      <div class="container">
+        <div class="rancho-landing">
+          <div class="rancho-hero">
+            <span class="rancho-eyebrow">🐾 Bem-vindo ao Rancho</span>
+            <h1>Tudo que seu bichinho merece, direto do rancho pra sua casa</h1>
+            <p class="rancho-lead">Ração e petiscos naturais, acessórios de selaria feitos à mão e mimos escolhidos com carinho — pra cães, gatos e todo o resto da família.</p>
+            <div class="rancho-badges">
+              <div class="rancho-badge">${iconePata}100% Pet Friendly</div>
+              <div class="rancho-badge">${iconeFolha}Materiais Naturais</div>
+              <div class="rancho-badge">${iconeEnvio}Envio Rápido</div>
+            </div>
+            <blockquote class="rancho-quote">"Meu cachorro nunca esteve tão feliz com uma ração. Chegou rapidinho e ainda veio com um mimo!" — Fernanda, tutora da Mel 🐕</blockquote>
           </div>
 
-          <form id="form-login" onsubmit="return onSubmitLogin(event)">
-            <label>Usuário</label>
-            <input id="login-username" required autocomplete="username">
-            <label>Senha</label>
-            <input id="login-password" type="password" required autocomplete="current-password">
-            <button class="btn btn-primary" type="submit" style="width:100%;margin-top:16px;">Entrar</button>
-          </form>
+          <div>
+            <div class="card auth-card">
+              <div class="tabs">
+                <button id="tab-login" class="tab-btn active" onclick="mostrarAbaAuth('login')">Entrar</button>
+                <button id="tab-cadastro" class="tab-btn" onclick="mostrarAbaAuth('cadastro')">Criar conta</button>
+              </div>
 
-          <form id="form-cadastro" class="hidden" onsubmit="return onSubmitCadastro(event)">
-            <label>Usuário</label>
-            <input id="cad-username" required minlength="3">
-            <label>Senha (mín. 6 caracteres)</label>
-            <input id="cad-password" type="password" required minlength="6">
-            <label>Nome completo</label>
-            <input id="cad-nome" required minlength="2">
-            <label>Email</label>
-            <input id="cad-email" type="email" required>
-            <label>Telefone</label>
-            <input id="cad-telefone" required placeholder="(11) 99999-9999">
-            <label>CPF (11 dígitos, só números)</label>
-            <input id="cad-cpf" required minlength="11" maxlength="11">
-            <label>Endereço</label>
-            <input id="cad-endereco" required placeholder="Rua, número - Cidade">
-            <button class="btn btn-primary" type="submit" style="width:100%;margin-top:16px;">Criar conta</button>
-          </form>
+              <form id="form-login" onsubmit="return onSubmitLogin(event)">
+                <label>Usuário</label>
+                <input id="login-username" required autocomplete="username">
+                <label>Senha</label>
+                <input id="login-password" type="password" required autocomplete="current-password">
+                <button class="btn btn-primary" type="submit" style="width:100%;margin-top:16px;">Entrar</button>
+              </form>
 
-          <div id="auth-msg" class="msg hidden"></div>
+              <form id="form-cadastro" class="hidden" onsubmit="return onSubmitCadastro(event)">
+                <label>Usuário</label>
+                <input id="cad-username" required minlength="3">
+                <label>Senha (mín. 6 caracteres)</label>
+                <input id="cad-password" type="password" required minlength="6">
+                <label>Nome completo</label>
+                <input id="cad-nome" required minlength="2">
+                <label>Email</label>
+                <input id="cad-email" type="email" required>
+                <label>Telefone</label>
+                <input id="cad-telefone" required placeholder="(11) 99999-9999">
+                <label>CPF (11 dígitos, só números)</label>
+                <input id="cad-cpf" required minlength="11" maxlength="11">
+                <label>Endereço</label>
+                <input id="cad-endereco" required placeholder="Rua, número - Cidade">
+                <button class="btn btn-primary" type="submit" style="width:100%;margin-top:16px;">Criar conta</button>
+              </form>
+
+              <div id="auth-msg" class="msg hidden"></div>
+            </div>
+            <p class="auth-hint">Contas administrativas são criadas fora do site (script <code>criar_admin.py</code>).</p>
+          </div>
         </div>
-        <p class="auth-hint">Contas administrativas são criadas fora do site (script <code>criar_admin.py</code>).</p>
+
+        <div class="rancho-faq" id="faq">
+          <h2>Perguntas frequentes</h2>
+          <details class="faq-item" open>
+            <summary>Os produtos são mesmo naturais?${iconeMais}</summary>
+            <p>Sim! Trabalhamos só com fornecedores que usam ingredientes e materiais naturais, sem conservantes agressivos nem químicos desnecessários.</p>
+          </details>
+          <details class="faq-item">
+            <summary>Qual o prazo de entrega?${iconeMais}</summary>
+            <p>Pedidos são despachados em até 24h úteis. O prazo varia de 2 a 8 dias úteis conforme a região.</p>
+          </details>
+          <details class="faq-item">
+            <summary>Posso trocar se meu pet não gostar?${iconeMais}</summary>
+            <p>Pode sim, em até 30 dias após o recebimento. Basta entrar em contato com a gente.</p>
+          </details>
+          <details class="faq-item">
+            <summary>Vocês vendem produtos de selaria?${iconeMais}</summary>
+            <p>Sim, temos uma linha de acessórios e itens de selaria feitos à mão por artesãos parceiros do rancho.</p>
+          </details>
+        </div>
       </div>
     `;
   }
@@ -545,8 +663,13 @@
     appContent.innerHTML = `
       <div class="container loja-layout">
         <div class="loja-principal">
+          <div class="beneficios-strip">
+            <div class="beneficio-item">${iconePata}100% Pet Friendly</div>
+            <div class="beneficio-item">${iconeFolha}Materiais Naturais</div>
+            <div class="beneficio-item">${iconeEnvio}Envio Rápido</div>
+          </div>
           <div class="loja-header">
-            <h1>Catálogo</h1>
+            <h1>Catálogo do Rancho</h1>
             <select id="filtro-categoria" onchange="renderGradeProdutos()">
               <option value="">Todas as categorias</option>
               ${opcoesCategoria}
