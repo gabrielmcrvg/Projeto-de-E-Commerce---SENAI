@@ -12,13 +12,11 @@ from utils.utils import obter_ou_404
 
 router = APIRouter(prefix="/usuarios", tags=['Autenticacao'])
 
-# =-= GET =-=
 
 @router.get("/listar_usuarios", response_model=list[UsuarioResposta])
 def listar_usuarios(session: SessionDep, usuario: AdminAtual):
     return session.query(Usuario).all()
 
-# =-= POST =-=
 
 @router.post("/registrar", response_model=UsuarioResposta, status_code=201)
 def registrar(dados: UsuarioEntrada, session: SessionDep):
@@ -26,6 +24,7 @@ def registrar(dados: UsuarioEntrada, session: SessionDep):
     session.add(usuario)
     session.commit()
     return usuario
+
 
 @router.post("/token", response_model=Token)
 def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], session: SessionDep):
@@ -35,13 +34,9 @@ def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], session: S
     token = criar_token({"sub": usuario.username})
     return Token(access_token=token, token_type="bearer")
 
-# =-= DELETE =-=
 
 @router.delete("/{usuario_id}", status_code=204)
 def deletar_usuario(usuario_id: int, session: SessionDep, usuario_logado: AdminAtual):
-    # Se o usuario tambem for um cliente, precisa deletar via Cliente para
-    # remover a linha das duas tabelas (usuarios e clientes). Deletando so
-    # como Usuario deixava a linha de clientes orfa.
     cliente = session.get(Cliente, usuario_id)
     if cliente is not None:
         session.delete(cliente)

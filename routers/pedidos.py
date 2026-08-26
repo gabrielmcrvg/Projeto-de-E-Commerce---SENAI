@@ -12,16 +12,20 @@ from schemas.pedido import PagamentoEntrada, PedidoEntrada, PedidoPatch, PedidoR
 from seguranca import AdminAtual, UsuarioAtual
 from utils.utils import obter_ou_404
 
+
 router = APIRouter(prefix='/pedidos', tags=['Pedidos'])
+
 
 def validar_cliente(cliente_id: int, session):
     obter_ou_404(session, Cliente, cliente_id, "Cliente")
+
 
 def agregar_itens(itens):
     quantidades_por_produto = defaultdict(int)
     for item in itens:
         quantidades_por_produto[item.produto_id] += item.quantidade
     return quantidades_por_produto
+
 
 def montar_itens_pedido(session: SessionDep, pedido: Pedido, itens):
     if not itens:
@@ -34,15 +38,16 @@ def montar_itens_pedido(session: SessionDep, pedido: Pedido, itens):
         novos_itens.append(ItemPedido(produto_id=produto.id, quantidade=quantidade, preco_unitario=produto.preco))
     return novos_itens
 
-# =-= GET =-=
 
 @router.get('/listar_pedidos', response_model=list[PedidoResposta])
 def listar_pedidos(session: SessionDep, usuario: AdminAtual, pag: Paginacao = Depends()):
     return session.query(Pedido).options(selectinload(Pedido.cliente), selectinload(Pedido.itens_pedido)).offset(pag.skip).limit(pag.limit).all()
 
+
 @router.get('/meus_pedidos', response_model=list[PedidoResposta])
 def listar_meus_pedidos(session: SessionDep, usuario: UsuarioAtual, pag: Paginacao = Depends()):
     return session.query(Pedido).filter(Pedido.cliente_id == usuario.id).options(selectinload(Pedido.cliente), selectinload(Pedido.itens_pedido)).offset(pag.skip).limit(pag.limit).all()
+
 
 @router.get('/{pedido_id}', response_model=PedidoResposta)
 def buscar_pedido(session: SessionDep, pedido_id: int, usuario: UsuarioAtual):
@@ -51,7 +56,6 @@ def buscar_pedido(session: SessionDep, pedido_id: int, usuario: UsuarioAtual):
         raise HTTPException(status_code=403, detail="Você não tem permissão para ver este pedido.")
     return pedido
 
-# =-= POST =-=
 
 @router.post('/criar_pedido', status_code=201, response_model=PedidoResposta)
 def criar_pedido(session: SessionDep, dados: PedidoEntrada, usuario: UsuarioAtual):
@@ -63,7 +67,6 @@ def criar_pedido(session: SessionDep, dados: PedidoEntrada, usuario: UsuarioAtua
     pedido_criado = obter_ou_404(session, Pedido, novo_pedido.id, "Pedido", options=[selectinload(Pedido.cliente), selectinload(Pedido.itens_pedido)])
     return pedido_criado
 
-# =-= PUT =-=
 
 @router.put('/{pedido_id}', response_model=PedidoResposta)
 def atualizar_pedido(session: SessionDep, pedido_id: int, dados: PedidoEntrada, usuario: UsuarioAtual):
@@ -77,8 +80,6 @@ def atualizar_pedido(session: SessionDep, pedido_id: int, dados: PedidoEntrada, 
     session.refresh(pedido)
     return pedido
 
-
-# =-= PATCH =-=
 
 @router.patch('/{pedido_id}', response_model=PedidoResposta)
 def alterar_pedido(session: SessionDep, pedido_id: int, dados: PedidoPatch, usuario: UsuarioAtual):
@@ -96,9 +97,6 @@ def alterar_pedido(session: SessionDep, pedido_id: int, dados: PedidoPatch, usua
     return pedido
 
 
-
-# =-= POST /pagar =-=
-
 @router.post('/{pedido_id}/pagar', response_model=PedidoResposta)
 def pagar_pedido(session: SessionDep, pedido_id: int, dados: PagamentoEntrada, usuario: UsuarioAtual):
     pedido = obter_ou_404(
@@ -111,14 +109,10 @@ def pagar_pedido(session: SessionDep, pedido_id: int, dados: PagamentoEntrada, u
     try:
         cliente.realizar_pagamento(pedido, dados.valor_pago)
     finally:
-        # mesmo quando o pagamento falha por falta de estoque, realizar_pagamento ja
-        # marcou o pedido como Cancelado - isso precisa ser persistido tambem
         session.commit()
     session.refresh(pedido)
     return pedido
 
-
-# =-= DELETE =-=
 
 @router.delete('/{pedido_id}')
 def remover_pedido(session: SessionDep, pedido_id: int, usuario: AdminAtual):

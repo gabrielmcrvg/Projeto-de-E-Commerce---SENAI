@@ -1,18 +1,15 @@
 from fastapi import APIRouter, HTTPException
 from sqlalchemy.orm import selectinload
-from sqlalchemy.exc import IntegrityError
 
 from database import SessionDep
-from exceptions.erros import CPFDuplicadoError
 from models.cliente import Cliente
 from models.usuario import Usuario
 from schemas.cliente import ClienteComPedido, ClienteEntrada, ClientePatch, ClienteResposta
 from seguranca import AdminAtual, UsuarioAtual, gerar_hash
-from utils.utils import obter_ou_404
+from utils.utils import commitar_ou_lancar, obter_ou_404, verificar_unico
 
 router = APIRouter(prefix='/clientes', tags=['Clientes'])
 
-# =-= GET =-=
 
 @router.get('/listar_clientes', response_model=list[ClienteResposta])
 def listar_clientes(session: SessionDep, usuario: AdminAtual):
@@ -30,14 +27,11 @@ def buscar_cliente(session: SessionDep, cliente_id: int, usuario: AdminAtual):
     cliente = obter_ou_404(session, Cliente, cliente_id, "Cliente", options=[selectinload(Cliente.pedidos)])
     return cliente
 
-# =-= POST =-=
 
 @router.post('/criar_cliente', status_code=201, response_model=ClienteResposta)
 def criar_cliente(session: SessionDep, dados: ClienteEntrada):
-    if session.query(Usuario).filter(Usuario.username == dados.username).first():
-        raise CPFDuplicadoError(f"O username '{dados.username}' já está em uso.")
-    if session.query(Cliente).filter(Cliente.cpf == dados.cpf).first():
-        raise CPFDuplicadoError(f"O CPF {dados.cpf} já está cadastrado.")
+    verificar_unico(session, Usuario, "username", dados.username, f"O username '{dados.username}' já está em uso.")
+    verificar_unico(session, Cliente, "cpf", dados.cpf, f"O CPF {dados.cpf} já está cadastrado.")
 
     novo_cliente = Cliente(
         username=dados.username,
@@ -50,15 +44,10 @@ def criar_cliente(session: SessionDep, dados: ClienteEntrada):
     )
     novo_cliente.validar_cadastro()
     session.add(novo_cliente)
-    try:
-        session.commit()
-    except IntegrityError:
-        session.rollback()
-        raise CPFDuplicadoError(f"CPF {dados.cpf} ou username já cadastrado.")
+    commitar_ou_lancar(session, f"CPF {dados.cpf} ou username já cadastrado.")
     cliente_criado = obter_ou_404(session, Cliente, novo_cliente.id, "Cliente", options=[selectinload(Cliente.pedidos)])
     return cliente_criado
 
-# =-= PUT =-=
 
 @router.put('/{cliente_id}', response_model=ClienteResposta)
 def atualizar_cliente(session: SessionDep, cliente_id: int, dados: ClienteEntrada, usuario: AdminAtual):
@@ -69,15 +58,10 @@ def atualizar_cliente(session: SessionDep, cliente_id: int, dados: ClienteEntrad
         else:
             setattr(cliente, campo, valor)
     cliente.validar_cadastro()
-    try:
-        session.commit()
-    except IntegrityError:
-        session.rollback()
-        raise CPFDuplicadoError(f"CPF {dados.cpf} ou username já cadastrado.")
+    commitar_ou_lancar(session, f"CPF {dados.cpf} ou username já cadastrado.")
     session.refresh(cliente)
     return cliente
 
-# =-= PATCH =-=
 
 @router.patch('/eu', response_model=ClienteResposta)
 def alterar_meus_dados(session: SessionDep, dados: ClientePatch, usuario: UsuarioAtual):
@@ -92,6 +76,7 @@ def alterar_meus_dados(session: SessionDep, dados: ClientePatch, usuario: Usuari
     session.refresh(cliente)
     return cliente
 
+
 @router.patch('/{cliente_id}', response_model=ClienteResposta)
 def alterar_cliente(session: SessionDep, cliente_id: int, dados: ClientePatch, usuario: AdminAtual):
     cliente = obter_ou_404(session, Cliente, cliente_id, "Cliente", options=[selectinload(Cliente.pedidos)])
@@ -99,15 +84,10 @@ def alterar_cliente(session: SessionDep, cliente_id: int, dados: ClientePatch, u
     for campo, valor in mudancas.items():
         setattr(cliente, campo, valor)
     cliente.validar_cadastro()
-    try:
-        session.commit()
-    except IntegrityError:
-        session.rollback()
-        raise CPFDuplicadoError("CPF ou username já cadastrado.")
+    commitar_ou_lancar(session, "CPF ou username já cadastrado.")
     session.refresh(cliente)
     return cliente
 
-# =-= DELETE =-=
 
 @router.delete('/{cliente_id}')
 def remover_cliente(session: SessionDep, cliente_id: int, usuario: AdminAtual):

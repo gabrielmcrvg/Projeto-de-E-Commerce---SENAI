@@ -10,18 +10,17 @@ from utils.utils import obter_ou_404
 
 router = APIRouter(prefix='/categorias', tags=['Categorias'])
 
-# =-= GET =-=
 
 @router.get('/listar_categorias', response_model=list[CategoriaResposta])
 def listar_categorias(session: SessionDep, usuario: UsuarioAtual, pag: Paginacao = Depends()):
         return session.query(Categoria).options(selectinload(Categoria.produtos)).offset(pag.skip).limit(pag.limit).all()
+
 
 @router.get('/{categoria_id}', response_model=CategoriaResposta)
 def buscar_categoria(session: SessionDep, categoria_id: int, usuario: UsuarioAtual):
         categoria = obter_ou_404(session, Categoria, categoria_id, "Categoria", options=[selectinload(Categoria.produtos)])
         return categoria
 
-# =-= POST =-=
 
 @router.post('/criar_categoria', status_code=201, response_model=CategoriaResposta)
 def criar_categoria(session: SessionDep, categoria: CategoriaEntrada, usuario: AdminAtual):
@@ -31,7 +30,6 @@ def criar_categoria(session: SessionDep, categoria: CategoriaEntrada, usuario: A
         session.refresh(nova)
         return nova
 
-# =-= PUT =-=
 
 @router.put('/{categoria_id}', response_model=CategoriaResposta)
 def atualizar_categoria(session: SessionDep, categoria_id: int, dados: CategoriaEntrada, usuario: AdminAtual):
@@ -41,7 +39,6 @@ def atualizar_categoria(session: SessionDep, categoria_id: int, dados: Categoria
         session.refresh(categoria)
         return categoria
 
-# =-= PATCH =-=
 
 @router.patch('/{categoria_id}', response_model=CategoriaResposta)
 def alterar_categoria(session: SessionDep, categoria_id: int, dados: CategoriaPatch, usuario: AdminAtual):
@@ -53,7 +50,6 @@ def alterar_categoria(session: SessionDep, categoria_id: int, dados: CategoriaPa
         session.refresh(categoria)
         return categoria
 
-# =-= DELETE =-=
 
 @router.delete('/{categoria_id}')
 def remover_categoria(session: SessionDep, categoria_id: int, usuario: AdminAtual):

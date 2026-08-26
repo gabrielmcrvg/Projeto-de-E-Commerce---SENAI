@@ -6,9 +6,7 @@ import models.pedido
 from models.usuario import Usuario
 from seguranca import gerar_hash
 
-# Garante que as tabelas existem antes de tentar inserir
 Base.metadata.create_all(bind=engine)
-
 
 def main():
     session = SessionLocal()
