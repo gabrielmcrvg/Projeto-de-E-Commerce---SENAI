@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException
 from sqlalchemy.orm import selectinload
 
 from database import SessionDep
@@ -6,6 +6,7 @@ from models.cliente import Cliente
 from models.usuario import Usuario
 from schemas.cliente import ClienteComPedido, ClienteEntrada, ClientePatch, ClienteResposta
 from seguranca import AdminAtual, UsuarioAtual, gerar_hash
+from services.email import enviar_confirmacao_cadastro
 from utils.utils import commitar_ou_lancar, obter_ou_404, verificar_unico
 
 router = APIRouter(prefix='/clientes', tags=['Clientes'])
@@ -29,7 +30,7 @@ def buscar_cliente(session: SessionDep, cliente_id: int, usuario: AdminAtual):
 
 
 @router.post('/criar_cliente', status_code=201, response_model=ClienteResposta)
-def criar_cliente(session: SessionDep, dados: ClienteEntrada):
+def criar_cliente(session: SessionDep, dados: ClienteEntrada, tarefas: BackgroundTasks):
     verificar_unico(session, Usuario, "username", dados.username, f"O username '{dados.username}' já está em uso.")
     verificar_unico(session, Cliente, "cpf", dados.cpf, f"O CPF {dados.cpf} já está cadastrado.")
 
@@ -46,6 +47,7 @@ def criar_cliente(session: SessionDep, dados: ClienteEntrada):
     session.add(novo_cliente)
     commitar_ou_lancar(session, f"CPF {dados.cpf} ou username já cadastrado.")
     cliente_criado = obter_ou_404(session, Cliente, novo_cliente.id, "Cliente", options=[selectinload(Cliente.pedidos)])
+    tarefas.add_task(enviar_confirmacao_cadastro, cliente_criado.email, cliente_criado.nome)
     return cliente_criado
 
 
