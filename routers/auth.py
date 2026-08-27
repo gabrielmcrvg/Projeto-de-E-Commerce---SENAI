@@ -1,12 +1,13 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from database import SessionDep
 from models.cliente import Cliente
 from models.usuario import Usuario
 from schemas.usuario import Token, UsuarioEntrada, UsuarioResposta
+from services.email import enviar_confirmacao_cadastro
 from seguranca import AdminAtual, criar_token, gerar_hash, verificar_senha
 from utils.utils import obter_ou_404
 
@@ -19,10 +20,11 @@ def listar_usuarios(session: SessionDep, usuario: AdminAtual):
 
 
 @router.post("/registrar", response_model=UsuarioResposta, status_code=201)
-def registrar(dados: UsuarioEntrada, session: SessionDep):
+def registrar(dados: UsuarioEntrada, session: SessionDep, tarefas: BackgroundTasks):
     usuario = Usuario(username=dados.username, hashed_password=gerar_hash(dados.password), nome=dados.nome, email=dados.email)
     session.add(usuario)
     session.commit()
+    tarefas.add_task(enviar_confirmacao_cadastro, usuario.email, usuario.nome)
     return usuario
 
 

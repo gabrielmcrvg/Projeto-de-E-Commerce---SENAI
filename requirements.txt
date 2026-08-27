@@ -49,3 +49,4 @@ urllib3==2.7.0
 uvicorn==0.52.1
 watchfiles==1.2.0
 websockets==17.0.1
+fastapi-mail==1.6.8
